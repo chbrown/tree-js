@@ -1,0 +1,15 @@
+{
+  "name": "tree-js",
+  "description": "Trees! With Javascript!",
+  "keywords" : ["tree", "trees"],
+  "version": "0.1.0",
+  "homepage": "https://github.com/chbrown/tree-js",
+  "repository": "git://github.com/chbrown/tree-js.git",
+  "author": "Christopher Brown <io@henrian.com> (http://henrian.com)",
+  "license": "MIT",
+  "staticPattern": "lib/{file}",
+  "staticDependencies": {
+    "angular": "*",
+    "ng-storage": "*"
+  }
+}
