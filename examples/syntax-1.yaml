@@ -1,0 +1,147 @@
+---
+- text: He looked down the canyon.
+  qtree: |
+    \Tree [.S
+      {NP\\ He}
+      [.VP {V\\ looked} [.PP {P\\down} {NP\\ the canyon} ] ]
+    ]
+- text: The mad old scientist ran from the lighthouse to his factory.
+  qtree: |
+    \Tree [.CP [.TP
+      [.NP {D\\The} [.AdjP {Adj\\mad} ] [.AdjP {Adj\\old} ] {N\\scientist} ]
+      [.VP {V \\ ran}
+        [.PP {P\\from} [.NP {D\\the} {N\\lighthouse} ] ]
+        [.PP {P\\to} [.NP {D\\his} {N\\factory} ] ]
+      ]
+    ] ]
+- text: A young cricketer from Wales with a bat and an attitude has finally claimed the ashes.
+  qtree: |
+    \Tree [.CP
+      [.TP
+        [.NP
+          {D\\A}
+          [.AdjP {Adj\\young} ]
+          {N\\cricketer}
+          [.PP {P\\from} [.NP {N\\Wales} ] ]
+          [.PP
+            {P\\with}
+            [.NP
+              [.NP {D\\a} {N\\bat} ]
+              {Conj\\and}
+              [.NP {D\\an} {N\\attitude} ]
+            ]
+          ]
+        ]
+        [.{T\1}
+          {T\\has}
+          [.VP
+            [.AdvP {Adv\\finally} ]
+            {V\\claimed}
+            [.NP {D\\the} {N\\ashes} ]
+          ]
+        ]
+      ]
+    ]
+- text: Abelard has written a volume of poems in Latin for Heloise.
+  qtree: |
+    \Tree [.CP [.TP
+      [.NP {} [.N\1 {N\\Abelard} {} ] ]
+      {T\\has}
+      [.VP [.V\1
+        [.V\1
+          {V\\written}
+          [.NP
+            {D\\a}
+            [.N\1
+              [.N\1
+                {N\\volume}
+                [.PP {} [.P\1
+                  {P\\of}
+                  [.NP {} [.N\1 {N\\poems} {} ] ]
+                ] ]
+              ]
+              [.PP {} [.P\1
+                {P\\in}
+                [.NP {} [.N\1 {N\\Latin} {} ] ]
+              ] ]
+            ]
+          ]
+        ]
+        [.PP {} [.P\1
+          {P\\for}
+          [.NP {} [.N\1 {N\\Heloise} {} ] ]
+        ] ]
+      ] ]
+    ] ]
+- text: I often wonder if John has a good grasp of the idea that Sandy stole our entire collection from the museum.
+  qtree: |
+    \Tree [.CP [.TP
+      [.NP {} [.N\1 {N\\I} { } ] ]
+      [.VP
+        [.V\1
+          [.AdvP [.Adv\1 {Adv\\often} {} ] ]
+          [.V\1
+            {V\\wonder}
+            [.CP
+              {C\\if}
+              [.TP
+                [.NP {}
+                  [.N\1 {N\\John} {} ]
+                ]
+                [.VP
+                  [.V\1
+                    {V\\has}
+                    [.NP
+                      {D\\a}
+                      [.N\1
+                        [.AdjP [.Adj\1 {Adj\\good} {} ] ]
+                        [.N\1
+                          {N\\grasp}
+                          [.PP {} [.P\1
+                            {P\\of}
+                            [.NP
+                              {D\\the}
+                              [.N\1
+                                {N\\idea}
+                                [.CP
+                                  {C\\that}
+                                  [.TP
+                                    [.NP {} [.N\1 {N\\Sandy} {} ] ]
+                                    [.VP [.V\1
+                                      [.V\1
+                                        {V\\stole}
+                                        [.NP
+                                          {D\\our}
+                                          [.N\1
+                                            [.AdjP [.Adj\1 {Adj\\entire} {} ] ]
+                                            [.N\1
+                                              {N\\collection}
+                                              {}
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                      [.PP {} [.P\1
+                                        {P\\from}
+                                        [.NP
+                                          {D\\the}
+                                          [.N\1 {N\\museum} {} ]
+                                        ]
+                                      ] ]
+                                    ] ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ] ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ] ]
