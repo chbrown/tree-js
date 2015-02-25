@@ -1,29 +1,22 @@
-/*jslint browser: true */ /*globals angular, TexParser */
+/*jslint browser: true */ /*globals angular, Textarea, TexParser */
 var app = angular.module('app', [
   'ngStorage',
 ]);
 
-function undent(string) {
-  var indent = 100;
-  var lines = string.split(/\n/g);
-  lines.forEach(function(line) {
-    var whitespace = line.match(/^(\s+)\S/);
-    if (whitespace) {
-      indent = Math.min(whitespace[1].length, indent);
-    }
-  });
-  return lines.map(function(line) {
-    return line.slice(indent);
-  }).join('\n');
-}
+app.directive('enhance', function() {
+  return {
+    restrict: 'A',
+    link: function(scope, el, attrs) {
+      Textarea.enhance(el[0]);
+    },
+  };
+});
 
 app.directive('qtree', function() {
   return {
     restrict: 'A',
     scope: {
       qtree: '=',
-      width: '=',
-      height: '=',
     },
     link: function(scope, el, attrs) {
       var canvas = el[0];
@@ -35,8 +28,8 @@ app.directive('qtree', function() {
         root.layout(ctx);
         root.recenter();
 
-        scope.width = canvas.width = root.box_width + 20;
-        scope.height = canvas.height = (root.level() * height) + 20;
+        canvas.width = root.box_width + 20;
+        canvas.height = (root.level() * height) + 20;
 
         // $(this).height(Math.max($(window).height() - 10, canvas.height));
         // webkitRequestAnimationFrame(draw);
