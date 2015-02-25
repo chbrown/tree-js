@@ -133,21 +133,3 @@ TexParser.prototype.parseText = function() {
   }
   return name.replace(/\\\\/g, ' ').replace(/\\1/g, "'");
 };
-
-function test() {
-  console.log(tests);
-  assertEq(parseText('{lovable} {in the way}'), {children: [], text: 'lovable', length: 9});
-  assertEq(parseText(' {lovable} {in the way} ]'), {children: [], text: 'lovable', length: 10});
-  assertEq(parseText('S [.S was the ] ]'), {children: [], text: 'S', length: 1});
-  assertEq(parseText(' S [.S was the ] ]'), {children: [], text: 'S', length: 2});
-
-  // parse_result = {length: '<int>', text|node: }
-
-  // JSON.stringify(parse('[.S John [.VP died ] ]'));
-  // assertEq(parse('[.S John [.VP died ] ]'),
-  //   { text: {children: [], text: 'S', length: 1},
-  //     children: [
-  //       {children: [], text: 'John', length: 4}
-  //     ],
-  //     length: 2});
-}
