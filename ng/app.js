@@ -65,6 +65,7 @@ app.controller('indexCtrl', function($scope, $http, $localStorage) {
 
   $http.get('examples/syntax-1.json').then(function(res) {
     $scope.examples = res.data;
+    $localStorage.$default({qtree: res.data[0].qtree});
   }, function(err) {
     console.error(err);
   });
