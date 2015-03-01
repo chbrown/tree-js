@@ -12,9 +12,34 @@ table {
 }
 // ----------------------
 
-textarea {
+h1, h2, h3, h4, h5, h6 {
+  margin: 1ex 0;
+}
+
+label h4 {
+  margin: 1ex 0 .25ex 0;
+}
+
+textarea, input {
   font: 10px Monaco, "Courier New", san-serif;
   box-sizing: border-box;
-  border: none;
   resize: none;
+}
+
+nav, main {
+  box-sizing: border-box;
+}
+
+[tree] > table {
+  margin: 5ex 0;
+  caption {
+    border-bottom: 1px solid #555;
+  }
+  td {
+    vertical-align: top;
+  }
+  span {
+    display: inline-block;
+    padding: .5ex .5em;
+  }
 }

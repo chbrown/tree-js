@@ -1,15 +1,123 @@
-class TreeNode<T> {
-  constructor(public value: T = null,
-              public children: TreeNode<T>[] = []) { }
+
+
+class MouseState {
+  down: boolean = false;
+
+  constructor(target: Node = document) {
+    target.addEventListener('mousedown', () => {
+      this.down = true;
+    });
+    target.addEventListener('mouseup', () => {
+      this.down = false;
+    });
+  }
+
+  get up(): boolean {
+    return !this.down;
+  }
 }
 
-class QtreeNode {
-  text_width: number;
-  box_width: number;
-  center: number;
+/**
+Create a new DOM Element with the given tag, attributes, and childNodes.
+If childNodes are not already DOM Node objects, each item in childNodes
+will be stringified and inserted as a text Node.
 
-  constructor(public value: string = '',
-              public children: QtreeNode[] = []) { }
+If childNodes is a NodeList or something other than an Array, this will break.
+*/
+function El(tagName: string, children: Array<string | Node> = []) {
+  var element = document.createElement(tagName);
+  for (var i = 0, child; (child = children[i]); i++) {
+    // automatically convert plain strings to text nodes
+    if (!(child instanceof Node)) {
+      child = document.createTextNode(String(child));
+    }
+    element.appendChild(child);
+  }
+  return element;
+};
+
+/**
+
+Constructor:
+
+    function TreeNode(value, children) {
+      this.value = (value === undefined) ? null : value;
+      this.children = (children === undefined) ? [] : children;
+    }
+
+*/
+class TreeNode<T> {
+  __children: TreeNode<T>[];
+  el: Element;
+
+  constructor(public value: T = null,
+              children: TreeNode<T>[] = []) {
+    this.children = children;
+  }
+
+  /**
+  Redraw the entire tree, discarding any existing elements.
+  */
+  render() {
+    if (this.children.length > 0) {
+      this.el = El('table', [
+        // create the parent caption
+        El('caption', [String(this.value)]),
+        // create the children cells
+        El('tr',
+          this.children.map(function(child) {
+            child.render();
+            return El('td', [child.el]);
+          })
+        ),
+      ]);
+    }
+    else {
+      this.el = El('span', [String(this.value)]);
+    }
+  }
+
+  /**
+  Find the tree node represented by a DOM Node.
+
+  Returns null if there are no matches.
+  */
+  find(target): TreeNode<T> {
+    if (target === this.el) {
+      return this;
+    }
+    for (var i = 0, child; (child = this.children[i]); i++) {
+      var result = child.find(target);
+      if (result) return result;
+    }
+    return null;
+  }
+
+  get children(): TreeNode<T>[] {
+    return this.__children;
+  }
+
+  set children(children: TreeNode<T>[]) {
+    // extend children with parent links
+    for (var i = 0, child; (child = children[i]); i++) {
+      child.parent = this;
+    }
+    this.__children = children;
+  }
+
+  /**
+  Return all nodes between two sibling nodes, inclusive.
+
+  Returns an empty list if they are not siblings.
+  */
+  toJSON(): any {
+    if (this.children.length > 0) {
+      return [this.value, this.children];
+    }
+    else {
+      return this.value;
+    }
+  }
 
   toString(): string {
     if (this.children.length) {
@@ -20,6 +128,15 @@ class QtreeNode {
     }
     return "(" + this.value + ")";
   }
+}
+
+class QtreeNode {
+  text_width: number;
+  box_width: number;
+  center: number;
+
+  constructor(public value: string = '',
+              public children: QtreeNode[] = []) { }
 
   layout(context: CanvasRenderingContext2D): number {
     var children_width = 0;
