@@ -1,0 +1,8 @@
+S ::= NP VP | AdvP NP VP | NP VP AdvP
+NP ::= D N | N
+N ::= dog | boy | girl | bag | stick
+D ::= the | a | an
+VP ::= V NP
+V ::= hit | hurt | loves
+AdvP ::= Adv
+Adv ::= badly | swiftly
