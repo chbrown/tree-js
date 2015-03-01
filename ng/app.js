@@ -1,7 +1,10 @@
-/*jslint browser: true */ /*globals angular, Textarea, TexParser */
+/*jslint browser: true */ /*globals angular, DOMLib, Textarea, QtreeNode, TreeNode */
 var app = angular.module('app', [
   'ngStorage',
 ]);
+
+var log = console.log.bind(console);
+Error.stackTraceLimit = 50;
 
 app.directive('enhance', function() {
   return {
@@ -24,23 +27,14 @@ app.directive('qtree', function() {
       var ctx = canvas.getContext('2d');
 
       function redraw() {
-        var root = new TexParser(scope.qtree).parse();
+        var root = QtreeNode.parse(scope.qtree);
         root.layout(ctx);
         root.recenter();
 
         canvas.width = root.box_width + 20;
         canvas.height = (root.level() * scope.height) + 20;
 
-        // $(this).height(Math.max($(window).height() - 10, canvas.height));
-        // webkitRequestAnimationFrame(draw);
-
-        // clear the canvas by setting the width
-        // canvas.width = canvas.width;
-
         ctx.save();
-        // ctx.fillStyle = 'white';
-        // ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.translate(10, 10);
         ctx.strokeStyle = '#222';
         ctx.fillStyle = '#222';
 
