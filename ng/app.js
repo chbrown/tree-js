@@ -17,19 +17,19 @@ app.directive('qtree', function() {
     restrict: 'A',
     scope: {
       qtree: '=',
+      height: '=',
     },
     link: function(scope, el, attrs) {
       var canvas = el[0];
       var ctx = canvas.getContext('2d');
 
-      var height = 50;
       function redraw() {
         var root = new TexParser(scope.qtree).parse();
         root.layout(ctx);
         root.recenter();
 
         canvas.width = root.box_width + 20;
-        canvas.height = (root.level() * height) + 20;
+        canvas.height = (root.level() * scope.height) + 20;
 
         // $(this).height(Math.max($(window).height() - 10, canvas.height));
         // webkitRequestAnimationFrame(draw);
@@ -44,17 +44,17 @@ app.directive('qtree', function() {
         ctx.strokeStyle = '#222';
         ctx.fillStyle = '#222';
 
-        root.draw(ctx, height, 0, 0);
+        root.draw(ctx, scope.height, 0, 0);
         ctx.restore();
       }
 
-      scope.$watch('qtree', redraw);
+      scope.$watchGroup(['qtree', 'height'], redraw);
     }
   };
 });
 
 app.controller('indexCtrl', function($scope, $http, $localStorage) {
-  $scope.$storage = $localStorage;
+  $scope.$storage = $localStorage.$default({level_height: 40});
 
   $http.get('examples/syntax-1.json').then(function(res) {
     $scope.examples = res.data;

@@ -10,16 +10,19 @@
   <script src="tree.js"></script>
 </head>
 <body ng-app="app" ng-controller="indexCtrl">
-  <nav>
+  <nav style="padding: 10px; border-bottom: 1px solid #AAA">
     <label>Load example:
       <select ng-model="$storage.qtree"
         ng-options="example.qtree as (example.text | limitTo:50) for example in examples"></select>
+    </label>
+    <label>Level height:
+      <input type="number" min="12" max="100" ng-model="$storage.level_height">
     </label>
   </nav>
   <div style="position: absolute; box-sizing: border-box; width: 100%; padding: 10px;">
     <textarea ng-model="$storage.qtree" style="width: 100%; min-height: 400px;" enhance></textarea>
   </div>
   <div style="position: absolute; right: 0; pointer-events: none; opacity: 0.9">
-    <canvas qtree="$storage.qtree"></canvas>
+    <canvas qtree="$storage.qtree" height="$storage.level_height"></canvas>
   </div>
 </body>
