@@ -14,6 +14,7 @@
   },
   "staticDependencies": {
     "angular": "*",
+    "lo-dash": "*",
     "ng-storage": "*",
     "react": "*"
   }
