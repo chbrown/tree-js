@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <title>tree-js drawing</title>
+  <link href="../site.css" rel="stylesheet" type="text/css">
+  <script src="../lib/angular.js"></script>
+  <script src="../lib/textarea.js"></script>
+  <script src="../lib/ngStorage.js"></script>
+  <script src="qtree.js"></script>
+  <script src="app.js"></script>
+</head>
+<body ng-app="app" ng-controller="canvasCtrl">
+  <nav style="padding: 10px; border-bottom: 1px solid #AAA">
+    <label>Load example:
+      <select ng-model="$storage.qtree"
+        ng-options="example.qtree as (example.text | limitTo:50) for example in examples"></select>
+    </label>
+    <label>Level height:
+      <input type="number" min="12" max="100" ng-model="$storage.level_height">
+    </label>
+  </nav>
+  <main style="position: relative; padding: 5px; width: 100%;">
+    <div style="width: 100%">
+      <textarea ng-model="$storage.qtree" enhance
+        style="width: 100%; min-height: 400px; border: none;"></textarea>
+    </div>
+    <div style="position: absolute; top: 10px; right: 10px; pointer-events: none; opacity: 0.9">
+      <canvas qtree="$storage.qtree" height="$storage.level_height"></canvas>
+    </div>
+  </main>
+</body>

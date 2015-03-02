@@ -2,13 +2,12 @@
 <head>
   <meta charset="utf-8">
   <title>tree-js splitter</title>
-  <link href="site.css" rel="stylesheet" type="text/css">
-  <script src="lib/angular.js"></script>
-  <script src="lib/domlib.js"></script>
-  <script src="lib/textarea.js"></script>
-  <script src="lib/ngStorage.js"></script>
+  <link href="../site.css" rel="stylesheet" type="text/css">
+  <script src="../lib/angular.js"></script>
+  <script src="../lib/textarea.js"></script>
+  <script src="../lib/ngStorage.js"></script>
   <script src="tree.js"></script>
-  <script src="ng/app.js"></script>
+  <script src="app.js"></script>
 </head>
 <body ng-app="app">
   <nav ng-controller="assignmentCtrl" style="position: absolute; width: 300px; padding: 10px;">
@@ -28,9 +27,9 @@
   <main ng-controller="checkerCtrl" style="margin-left: 300px; padding: 10px;">
     <button ng-click="reload()">Reload</button>
     <h3>Parse</h3>
-    <div splitter tree="tree"></div>
+    <div splitter class="tree" tree="tree" style="margin: 5ex 0"></div>
 
-    <pre>{{tree | json:'  '}}</pre>
+    <pre style="margin: 5ex 0; color: #AAA">{{tree | json:'  '}}</pre>
 
     <button ng-click="check()">Check</button>
     <h4>Status</h4>

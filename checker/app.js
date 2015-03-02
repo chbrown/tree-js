@@ -4,7 +4,6 @@ var app = angular.module('app', [
 ]);
 
 var log = console.log.bind(console);
-Error.stackTraceLimit = 50;
 
 function containingElement(node) {
   if (node.nodeType === document.TEXT_NODE) {
@@ -64,7 +63,7 @@ app.directive('splitter', function() {
         new_split.children = parent.children.splice(start, (end - start) + 1, new_split);
 
         scope.$apply(function() {
-          // parent.render();
+          // parent.render(); // since the elements above don't need to be re-rendered?
           render();
         });
       });
@@ -92,49 +91,6 @@ app.directive('enhance', function() {
   };
 });
 
-app.directive('qtree', function() {
-  return {
-    restrict: 'A',
-    scope: {
-      qtree: '=',
-      height: '=',
-    },
-    link: function(scope, el, attrs) {
-      var canvas = el[0];
-      var ctx = canvas.getContext('2d');
-
-      function redraw() {
-        var root = QtreeNode.parse(scope.qtree);
-        root.layout(ctx);
-        root.recenter();
-
-        canvas.width = root.box_width + 20;
-        canvas.height = (root.level() * scope.height) + 20;
-
-        ctx.save();
-        ctx.strokeStyle = '#222';
-        ctx.fillStyle = '#222';
-
-        root.draw(ctx, scope.height, 0, 0);
-        ctx.restore();
-      }
-
-      scope.$watchGroup(['qtree', 'height'], redraw);
-    }
-  };
-});
-
-app.controller('indexCtrl', function($scope, $http, $localStorage) {
-  $scope.$storage = $localStorage.$default({level_height: 40});
-
-  $http.get('examples/syntax-1.json').then(function(res) {
-    $scope.examples = res.data;
-    $localStorage.$default({qtree: res.data[0].qtree});
-  }, function(err) {
-    console.error(err);
-  });
-});
-
 app.controller('assignmentCtrl', function($scope, $localStorage) {
   $scope.$storage = $localStorage;
 });
@@ -154,9 +110,9 @@ app.controller('checkerCtrl', function($scope, $localStorage) {
 
   $scope.reload();
 
-  // $scope.$watch('tree', function() {
-  //   log('tree changed:', $scope.tree);
-  // });
+  $scope.$watch('tree', function() {
+    log('tree changed:', $scope.tree);
+  });
 
   $scope.check = function() {
     log('checking tree:', $scope.tree);

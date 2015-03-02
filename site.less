@@ -17,21 +17,21 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 label h4 {
+  // h4 is about the size of text in labels anyway
   margin: 1ex 0 .25ex 0;
+}
+
+div, section, nav, main, textarea, input {
+  box-sizing: border-box;
 }
 
 textarea, input {
   font: 10px Monaco, "Courier New", san-serif;
-  box-sizing: border-box;
+  padding: 2px;
   resize: none;
 }
 
-nav, main {
-  box-sizing: border-box;
-}
-
-[tree] > table {
-  margin: 5ex 0;
+.tree > table {
   caption {
     border-bottom: 1px solid #555;
   }
