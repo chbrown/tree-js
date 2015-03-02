@@ -8,6 +8,9 @@
   "author": "Christopher Brown <io@henrian.com> (http://henrian.com)",
   "license": "MIT",
   "staticPattern": "lib/{file}",
+  "devDependencies": {
+    "typescript": "*"
+  },
   "staticDependencies": {
     "angular": "*",
     "ng-storage": "*",
