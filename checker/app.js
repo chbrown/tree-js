@@ -96,7 +96,10 @@ app.controller('assignmentCtrl', function($scope, $localStorage) {
 });
 
 app.controller('checkerCtrl', function($scope, $localStorage) {
-  $scope.$storage = $localStorage;
+  $scope.$storage = $localStorage.$default({
+    input: 'a vicious dog bit the girl',
+    start: 'S',
+  });
 
   $scope.reload = function() {
     var tokens = $scope.$storage.input.split(/\s+/);
