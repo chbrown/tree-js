@@ -5,3 +5,6 @@ examples/%.json: examples/%.yaml
 
 %.css: %.less
 	lessc $< | cleancss --keep-line-breaks --skip-advanced -o $@
+
+%.js: %.jsx
+  jsx <$< >$@

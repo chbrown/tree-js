@@ -9,6 +9,7 @@
   "license": "MIT",
   "staticPattern": "lib/{file}",
   "devDependencies": {
+    "react-tools": "*",
     "typescript": "*"
   },
   "staticDependencies": {
