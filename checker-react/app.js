@@ -56,18 +56,18 @@ app.directive('reactSplitter', function() {
       sync: '&',
     },
     link: function(scope, el, attrs) {
-      var tree = scope.tree;
-
       var startNode;
-      tree.selectStartNode = function(node) {
+
+      var handler = {};
+      handler.selectStartNode = function(node) {
         startNode = node;
       };
-      tree.hoverEndNode = function(node) {
+      handler.hoverEndNode = function(node) {
         if (startNode) {
           // findBridge => { parent: TreeNode<T>; start: number; end: number; }
           var bridge = TreeNode.findBridge(startNode, node);
           var bridge_nodes = bridge.parent.children.slice(bridge.start, bridge.end + 1);
-          tree.applyAll(function(node) {
+          scope.tree.applyAll(function(node) {
             node.selected = false;
           });
           bridge_nodes.forEach(function(node) {
@@ -76,49 +76,61 @@ app.directive('reactSplitter', function() {
           render();
         }
       };
-      tree.selectEndNode = function(node) {
+      handler.selectEndNode = function(node) {
         if (startNode) {
           var bridge = TreeNode.findBridge(startNode, node);
           scope.$apply(function() {
             bridge.parent.splice(bridge.start, bridge.end, '');
           });
+          sync();
           // still need to deselect despite the css class; we don't want to end
           // up dragging a selection instead of starting a new selection each time
           document.getSelection().removeAllRanges();
         }
       };
-      document.addEventListener('mouseup', function() {
+
+      handler.mouseup = function() {
         if (startNode) {
           setTimeout(function() {
             startNode = null;
-            tree.applyAll(function(node) {
+            scope.tree.applyAll(function(node) {
               node.selected = false;
             });
             render();
           }, 50);
         }
-      });
+      };
 
-      tree.collapseNode = function(node) {
+      handler.collapseNode = function(node) {
         scope.$apply(function() {
           node.collapse();
           render();
+          sync();
         });
       };
 
-      tree.setNodeValue = function(node, value) {
+      handler.setNodeValue = function(node, value) {
         scope.$apply(function() {
           node.value = value;
           render();
+          sync();
         });
       };
 
-      var root = React.createElement(TreeSplitter, {node: tree, tree: tree});
+      document.addEventListener('mouseup', handler.mouseup);
+
       function render() {
-        scope.sync({tree: tree});
-        React.render(root, el[0]);
+        React.render(scope.root, el[0]);
       }
-      render();
+
+      function sync() {
+        scope.sync({tree: scope.tree});
+      }
+
+      scope.$watch('tree', function() {
+        scope.root = React.createElement(TreeSplitter, {node: scope.tree, tree: handler});
+        React.render(scope.root, el[0]);
+      });
     }
   };
 });

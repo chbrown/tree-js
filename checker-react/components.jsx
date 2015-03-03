@@ -61,8 +61,10 @@ var TreeSplitter = React.createClass({
   setParentValue: function(ev) {
     ev.preventDefault();
     var input = this.refs.parentValue.getDOMNode();
-    this.props.tree.setNodeValue(this.props.node, input.value);
     this.setState({editingParentValue: false});
+    if (input.value !== this.props.node.value) {
+      this.props.tree.setNodeValue(this.props.node, input.value);
+    }
   },
   editValue: function() {
     this.setState({editingParentValue: true});
