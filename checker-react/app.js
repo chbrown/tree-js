@@ -20,7 +20,11 @@ app.controller('assignmentCtrl', function($scope, $localStorage) {
 });
 
 app.controller('checkerCtrl', function($scope, $localStorage) {
-  $scope.$storage = $localStorage;
+  $scope.$storage = $localStorage.$default({
+    grammar: '',
+    input: '',
+    start: 'S',
+  });
 
   try {
     $scope.tree = TreeNode.deserialize(localStorage.tree);
@@ -36,17 +40,21 @@ app.controller('checkerCtrl', function($scope, $localStorage) {
     });
     var start = $scope.$storage.start;
     $scope.tree = new TreeNode(start, children);
+    $scope.check();
   };
 
   $scope.sync = function(tree) {
     localStorage.tree = tree.serialize();
+    $scope.check();
   };
 
   $scope.check = function() {
-    log('checking tree:', $scope.tree);
+    var grammar = Grammar.parseBNF($scope.$storage.grammar);
+    $scope.errors = grammar.findErrors($scope.tree);
   };
-});
 
+  $scope.check();
+});
 
 app.directive('reactSplitter', function() {
   return {

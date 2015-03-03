@@ -39,10 +39,12 @@
       <react-splitter class="tree" tree="tree" sync="sync(tree)"></react-splitter>
     </div>
 
-    <!-- <pre style="margin: 5ex 0; color: #AAA">{{tree | json:'  '}}</pre> -->
-
-    <button ng-click="check(tree)">Check</button>
-    <h4>Status</h4>
-    <p>{{status}}</p>
+    <h4 ng-if="errors.length == 0">Successful parse!</h4>
+    <div ng-if="errors.length > 0">
+      <h4>Parsing errors:</h4>
+      <ul>
+        <li ng-repeat="error in errors track by $index">{{error}}</li>
+      </ul>
+    </div>
   </main>
 </body>

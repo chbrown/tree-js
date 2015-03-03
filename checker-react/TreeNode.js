@@ -166,3 +166,69 @@ var TreeNode = (function () {
     };
     return TreeNode;
 })();
+function arraysEqual(xs, ys) {
+    for (var i = 0, l = Math.max(xs.length, ys.length); i < l; i++) {
+        if (xs[i] !== ys[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+var Grammar = (function () {
+    function Grammar(rules) {
+        this.rules = rules;
+    }
+    Grammar.prototype.findErrors = function (node) {
+        var _this = this;
+        if (node === undefined) {
+            return ['No tree was provided'];
+        }
+        // don't check terminals
+        if (node.children.length === 0) {
+            return [];
+        }
+        var errors = [];
+        var node_symbol = node.value;
+        var rule = this.rules.filter(function (rule) {
+            return rule.symbol == node_symbol;
+        })[0];
+        if (rule === undefined) {
+            errors.push("No rule exists for the value: " + node_symbol);
+        }
+        else {
+            var node_production = node.children.map(function (child) { return child.value; });
+            var production = rule.productions.filter(function (production) {
+                return arraysEqual(production, node_production);
+            })[0];
+            if (production === undefined) {
+                errors.push("No such production rule exists: " + node_symbol + " -> " + node_production.join(' '));
+            }
+            else {
+                console.log("Using rule: " + rule.symbol + " -> " + node_production.join(' '));
+            }
+        }
+        var childrens_errors = node.children.map(function (child) {
+            return _this.findErrors(child);
+        });
+        // flatten
+        var child_errors = Array.prototype.concat.apply([], childrens_errors);
+        Array.prototype.push.apply(errors, child_errors);
+        return errors;
+    };
+    Grammar.parseBNF = function (input) {
+        var lines = input.trim().split(/\n/);
+        var rules = lines.filter(function (line) {
+            return line.indexOf('::=') > -1;
+        }).map(function (line) {
+            var parts = line.split('::=');
+            return {
+                symbol: parts[0].trim(),
+                productions: (parts[1] || '').trim().split('|').map(function (production) {
+                    return production.trim().split(/\s+/);
+                }),
+            };
+        });
+        return new Grammar(rules);
+    };
+    return Grammar;
+})();
