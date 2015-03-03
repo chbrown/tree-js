@@ -56,6 +56,27 @@ var TreeNode = (function () {
         new_node.parent = this;
     };
     /**
+    Un-splice. Removes the called node, with the parent absorbing the children
+    in the same place / order.
+    */
+    TreeNode.prototype.collapse = function () {
+        if (!this.parent)
+            throw new Error('Cannot collapse the root node');
+        if (this.children.length === 0)
+            throw new Error('Cannot collapse a terminal node');
+        var parent = this.parent;
+        var index = parent.children.indexOf(this);
+        // fix the children's concept of parent
+        this.children.forEach(function (child) {
+            child.parent = parent;
+        });
+        var splice_args = this.children.slice(0);
+        splice_args.unshift(index, 1);
+        // remove the current node from the parent's children, and replace it with
+        // the current node's children.
+        Array.prototype.splice.apply(parent.children, splice_args);
+    };
+    /**
     Return a list of parents of this node, from oldest to youngest,
     ending with the calling node.
     */
@@ -69,12 +90,43 @@ var TreeNode = (function () {
     };
     /** Need custom JSON-ifier to avoid circularity (.parent) problems */
     TreeNode.prototype.toJSON = function () {
+        return {
+            value: this.value,
+            children: this.children,
+        };
+    };
+    TreeNode.fromJSON = function (root) {
+        var node = new TreeNode(root.value);
+        node.children = root.children.map(function (child) {
+            return TreeNode.fromJSON(child);
+        });
+        return node;
+    };
+    TreeNode.prototype.toTuple = function () {
         if (this.children.length > 0) {
-            return [this.value, this.children];
+            return [
+                this.value,
+                this.children.map(function (child) { return child.toTuple(); }),
+            ];
         }
         else {
-            return this.value;
+            return [this.value];
         }
+    };
+    TreeNode.prototype.serialize = function () {
+        return JSON.stringify(this.toTuple());
+    };
+    TreeNode.fromTuple = function (tuple) {
+        var node = new TreeNode(tuple[0]);
+        if (tuple[1] !== undefined) {
+            node.children = tuple[1].map(function (child) {
+                return TreeNode.fromTuple(child);
+            });
+        }
+        return node;
+    };
+    TreeNode.deserialize = function (serialized) {
+        return TreeNode.fromTuple(JSON.parse(serialized));
     };
     TreeNode.findFirstCommonAncestor = function (a, b) {
         // get the two lines of ancestry

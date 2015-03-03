@@ -36,12 +36,12 @@
       <li>Double click a node to undo a branch.</li>
     </ul>
     <div style="margin: 5ex 0" class="no-selection">
-      <react-splitter class="tree" ng-if="tree" tree="tree"></react-splitter>
+      <react-splitter class="tree" ng-if="tree" tree="tree" sync="sync(tree)"></react-splitter>
     </div>
 
-    <pre style="margin: 5ex 0; color: #AAA">{{tree | json:'  '}}</pre>
+    <!-- <pre style="margin: 5ex 0; color: #AAA">{{tree | json:'  '}}</pre> -->
 
-    <button ng-click="check()">Check</button>
+    <button ng-click="check(tree)">Check</button>
     <h4>Status</h4>
     <p>{{status}}</p>
   </main>

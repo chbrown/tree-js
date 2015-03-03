@@ -58,6 +58,26 @@ class TreeNode<T> {
   }
 
   /**
+  Un-splice. Removes the called node, with the parent absorbing the children
+  in the same place / order.
+  */
+  collapse(): void {
+    if (!this.parent) throw new Error('Cannot collapse the root node');
+    if (this.children.length === 0) throw new Error('Cannot collapse a terminal node');
+    var parent = this.parent;
+    var index = parent.children.indexOf(this);
+    // fix the children's concept of parent
+    this.children.forEach(child => {
+      child.parent = parent;
+    });
+    var splice_args = <any[]>this.children.slice(0);
+    splice_args.unshift(index, 1);
+    // remove the current node from the parent's children, and replace it with
+    // the current node's children.
+    Array.prototype.splice.apply(parent.children, splice_args);
+  }
+
+  /**
   Return a list of parents of this node, from oldest to youngest,
   ending with the calling node.
   */
@@ -72,12 +92,44 @@ class TreeNode<T> {
 
   /** Need custom JSON-ifier to avoid circularity (.parent) problems */
   toJSON(): any {
+    return {
+      value: this.value,
+      children: this.children,
+    };
+  }
+  static fromJSON<T>(root: any): TreeNode<T> {
+    var node = new TreeNode(root.value);
+    node.children = root.children.map(child => {
+      return TreeNode.fromJSON(child);
+    });
+    return node;
+  }
+
+  toTuple() {
     if (this.children.length > 0) {
-      return [this.value, this.children];
+      return [
+        this.value,
+        this.children.map(child => child.toTuple()),
+      ];
     }
     else {
-      return this.value;
+      return [this.value];
     }
+  }
+  serialize(): string {
+    return JSON.stringify(this.toTuple());
+  }
+  static fromTuple<T>(tuple: any): TreeNode<T> {
+    var node = new TreeNode(tuple[0]);
+    if (tuple[1] !== undefined) {
+      node.children = tuple[1].map(child => {
+        return TreeNode.fromTuple(child);
+      });
+    }
+    return node;
+  }
+  static deserialize<T>(serialized: string): TreeNode<T> {
+    return TreeNode.fromTuple<T>(JSON.parse(serialized));
   }
 
   static findFirstCommonAncestor<T>(a: TreeNode<T>, b: TreeNode<T>): TreeNode<T> {

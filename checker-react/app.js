@@ -22,22 +22,25 @@ app.controller('assignmentCtrl', function($scope, $localStorage) {
 app.controller('checkerCtrl', function($scope, $localStorage) {
   $scope.$storage = $localStorage;
 
+  try {
+    $scope.tree = TreeNode.deserialize(localStorage.tree);
+  }
+  catch (exc) {
+    console.error('could not deserialize tree from localStorage', exc);
+  }
+
   $scope.reload = function() {
     var tokens = $scope.$storage.input.split(/\s+/);
     var children = tokens.map(function(token) {
       return new TreeNode(token);
     });
     var start = $scope.$storage.start;
-    // log('checkerCtrl:reloading [.%s %o]', start, tokens);
-    var tree = new TreeNode(start, children);
-    $scope.tree = tree;
+    $scope.tree = new TreeNode(start, children);
   };
 
-  $scope.reload();
-
-  $scope.$watch('tree', function() {
-    // log('tree changed:', $scope.tree);
-  });
+  $scope.sync = function(tree) {
+    localStorage.tree = tree.serialize();
+  };
 
   $scope.check = function() {
     log('checking tree:', $scope.tree);
@@ -50,6 +53,7 @@ app.directive('reactSplitter', function() {
     restrict: 'E',
     scope: {
       tree: '=',
+      sync: '&',
     },
     link: function(scope, el, attrs) {
       var tree = scope.tree;
@@ -76,7 +80,7 @@ app.directive('reactSplitter', function() {
         if (startNode) {
           var bridge = TreeNode.findBridge(startNode, node);
           scope.$apply(function() {
-            bridge.parent.splice(bridge.start, bridge.end, "NEW");
+            bridge.parent.splice(bridge.start, bridge.end, '');
           });
           // still need to deselect despite the css class; we don't want to end
           // up dragging a selection instead of starting a new selection each time
@@ -95,10 +99,25 @@ app.directive('reactSplitter', function() {
         }
       });
 
+      tree.collapseNode = function(node) {
+        scope.$apply(function() {
+          node.collapse();
+          render();
+        });
+      };
+
+      tree.setNodeValue = function(node, value) {
+        scope.$apply(function() {
+          node.value = value;
+          render();
+        });
+      };
+
       var root = React.createElement(TreeSplitter, {node: tree, tree: tree});
       function render() {
+        scope.sync({tree: tree});
         React.render(root, el[0]);
-      };
+      }
       render();
     }
   };

@@ -11,6 +11,9 @@ table {
   }
 }
 // ----------------------
+body {
+  font: 16px Times;
+}
 
 h1, h2, h3, h4, h5, h6 {
   margin: 1ex 0;
@@ -21,11 +24,11 @@ label h4 {
   margin: 1ex 0 .25ex 0;
 }
 
-div, section, nav, main, textarea, input {
+div, section, nav, main, textarea, input, span {
   box-sizing: border-box;
 }
 
-textarea, input {
+textarea, input, pre {
   font: 10px Monaco, "Courier New", san-serif;
   padding: 2px;
   resize: none;
@@ -38,21 +41,34 @@ textarea, input {
 }
 
 .tree {
-  caption {
-    border-bottom: 1px solid #555;
-  }
-  th {
-    text-align: center;
-    border-bottom: 1px solid #555;
-  }
   td {
     vertical-align: top;
   }
-  span {
+  .selected {
+    background-color: #CCC;
+  }
+
+  form {
+    ::selection {
+      background: #ACCEF7;
+    }
+  }
+
+  .terminal-node {
     display: inline-block;
     padding: .5ex .5em;
   }
-  .selected {
-    background-color: #CCC;
+  .parent-node {
+    text-align: center;
+    border-bottom: 1px solid #555;
+  }
+  .parent-node-value {
+    display: inline-block;
+    font: 16px Times;
+    text-align: center;
+    border: none;
+    width: 40px;
+    padding: 4px 2px 2px;
+    font-weight: bold;
   }
 }

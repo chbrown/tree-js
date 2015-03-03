@@ -5,6 +5,11 @@ Inside a React.createClass component, the createClass acts like a class declarat
 and the custom fields you give it become properties on the instances of that class.
 */
 var TreeSplitter = React.createClass({
+  getInitialState: function() {
+    return {
+      editingParentValue: false,
+    };
+  },
   render: function() {
     var tree = this.props.tree;
     var node = this.props.node;
@@ -13,10 +18,28 @@ var TreeSplitter = React.createClass({
       var cells = node.children.map(function(child) {
         return <td><TreeSplitter node={child} tree={tree} /></td>;
       });
+
+      var parent_value;
+      if (this.state.editingParentValue || this.props.node.value === '') {
+        parent_value = (
+          <form onSubmit={this.setParentValue}>
+            <input className="parent-node-value" autoFocus onBlur={this.setParentValue}
+              ref="parentValue" defaultValue={node.value} />
+          </form>
+        );
+      }
+      else {
+        parent_value = (
+          <span className="parent-node-value">{node.value}</span>
+        );
+      }
+
       return (
         <table className={className}>
           <tr>
-            <th className="parent" colSpan={cells.length} onClick={this.captionClick}>{node.value}</th>
+            <th className="parent-node" colSpan={cells.length} onClick={this.editValue} onDoubleClick={this.doubleClick}>
+              {parent_value}
+            </th>
           </tr>
           <tr>
             {cells}
@@ -26,7 +49,7 @@ var TreeSplitter = React.createClass({
     }
     else {
       return (
-        <span className={className}
+        <span className={'terminal-node ' + className}
           onMouseDown={this.mouseDown}
           onMouseEnter={this.mouseEnter}
           onMouseUp={this.mouseUp}>
@@ -34,6 +57,18 @@ var TreeSplitter = React.createClass({
         </span>
       );
     }
+  },
+  setParentValue: function(ev) {
+    ev.preventDefault();
+    var input = this.refs.parentValue.getDOMNode();
+    this.props.tree.setNodeValue(this.props.node, input.value);
+    this.setState({editingParentValue: false});
+  },
+  editValue: function() {
+    this.setState({editingParentValue: true});
+  },
+  doubleClick: function() {
+    this.props.tree.collapseNode(this.props.node);
   },
   mouseDown: function() {
     this.props.tree.selectStartNode(this.props.node);
