@@ -5,6 +5,9 @@ h1,h2,h3,h4,h5,h6{margin:1ex 0}
 label h4{margin:1ex 0 .25ex 0}
 div,input,main,nav,section,textarea{box-sizing:border-box}
 input,textarea{font:10px Monaco,"Courier New",san-serif;padding:2px;resize:none}
-.tree>table caption{border-bottom:1px solid #555}
-.tree>table td{vertical-align:top}
-.tree>table span{display:inline-block;padding:.5ex .5em}
+.no-selection ::selection{background:0 0}
+.tree caption{border-bottom:1px solid #555}
+.tree th{text-align:center;border-bottom:1px solid #555}
+.tree td{vertical-align:top}
+.tree span{display:inline-block;padding:.5ex .5em}
+.tree .selected{background-color:#CCC}

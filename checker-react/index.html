@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <title>tree-js splitter</title>
+  <link href="../site.css" rel="stylesheet" type="text/css">
+  <script src="../lib/lodash.min.js"></script>
+  <script src="../lib/angular.js"></script>
+  <script src="../lib/textarea.js"></script>
+  <script src="../lib/ngStorage.js"></script>
+  <script src="../lib/react.js"></script>
+  <script src="../lib/JSXTransformer.js"></script>
+  <script src="TreeNode.js"></script>
+  <script src="app.js"></script>
+  <script src="components.jsx" type="text/jsx"></script>
+</head>
+<body>
+  <nav ng-controller="assignmentCtrl" style="position: absolute; width: 300px; padding: 10px;">
+    <label>
+      <h4>Grammar</h4>
+      <textarea ng-model="$storage.grammar" style="width: 100%; min-height: 400px;" enhance></textarea>
+    </label>
+    <label>
+      <h4>Input</h4>
+      <input type="text" ng-model="$storage.input" style="width: 100%">
+    </label>
+    <label>
+      <h4>Start</h4>
+      <input type="text" ng-model="$storage.start" style="width: 100%">
+    </label>
+  </nav>
+  <main ng-controller="checkerCtrl" style="margin-left: 300px; padding: 10px;">
+    <button ng-click="reload()">Reload</button>
+    <h3>Parse</h3>
+    <ul>
+      <li>Select the text over multiple nodes to break them off into a new branch.</li>
+      <li>Double click a node to undo a branch.</li>
+    </ul>
+    <div style="margin: 5ex 0" class="no-selection">
+      <react-splitter class="tree" ng-if="tree" tree="tree"></react-splitter>
+    </div>
+
+    <pre style="margin: 5ex 0; color: #AAA">{{tree | json:'  '}}</pre>
+
+    <button ng-click="check()">Check</button>
+    <h4>Status</h4>
+    <p>{{status}}</p>
+  </main>
+</body>

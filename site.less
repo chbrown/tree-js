@@ -31,8 +31,18 @@ textarea, input {
   resize: none;
 }
 
-.tree > table {
+.no-selection {
+  ::selection {
+    background: none;
+  }
+}
+
+.tree {
   caption {
+    border-bottom: 1px solid #555;
+  }
+  th {
+    text-align: center;
     border-bottom: 1px solid #555;
   }
   td {
@@ -41,5 +51,8 @@ textarea, input {
   span {
     display: inline-block;
     padding: .5ex .5em;
+  }
+  .selected {
+    background-color: #CCC;
   }
 }
