@@ -7,6 +7,8 @@
   <script src="../lib/ngStorage.min.js"></script>
   <script src="../lib/textarea.js"></script>
   <script src="../lib/react.min.js"></script>
+  <script src="../lib/pako.min.js"></script>
+  <script src="compression.js"></script>
   <script src="TreeNode.js"></script>
   <script src="app.js"></script>
   <!-- debug: -->
@@ -34,8 +36,14 @@
     <button ng-click="setTreeFromStartAndTerminals($storage.start, $storage.terminals)">Reload</button>
     <h3>Parse</h3>
     <ul>
-      <li>Select the text over multiple nodes to break them off into a new branch.</li>
-      <li>Double click a node to undo a branch.</li>
+      <li>Drag a text selection over multiple nodes to break them off into a new branch.<br>
+        The nodes that will be placed under the new branch will be shaded gray while selecting.<br>
+        To discard the selection without creating a new node, simply drag to a point outside the tree.</li>
+      <li>Double click a node to undo a branch, collapsing its children into its place.<br>
+        You cannot collapse the root node.</li>
+      <li>Click on a node to edit its value.
+        You cannot edit the terminal nodes' values.
+      </li>
     </ul>
     <div style="margin: 5ex 0" class="tree no-selection">
       <div id="placeholder"></div>
@@ -47,6 +55,10 @@
       <ul>
         <li ng-repeat="error in errors track by $index">{{error}}</li>
       </ul>
+    </div>
+
+    <div style="margin: 5ex 0">
+      <a href="{{state_url}}">Link to current state</a>
     </div>
   </main>
 </body>

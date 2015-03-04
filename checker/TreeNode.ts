@@ -106,7 +106,7 @@ class TreeNode<T> {
   toJSON(): any {
     return {
       value: this.value,
-      children: this.children,
+      children: this.children.map(child => child.toJSON())
     };
   }
   static fromJSON<T>(root: any): TreeNode<T> {
@@ -206,7 +206,7 @@ class Grammar {
     return errors;
   }
 
-  static parseBNF(input: string): Grammar {
+  static parseBNF(input: string = ''): Grammar {
     var lines = input.trim().split(/\n/);
     var rules = lines
     .filter(line => line.indexOf('::=') > -1)
@@ -247,20 +247,30 @@ class TreeController<T> {
     }
   }
   selectEndNode(selection_end_node: TreeNode<T>) {
-    if (this.selection_start_node && selection_end_node) {
-      var bridge = TreeNode.findBridge(this.selection_start_node, selection_end_node);
-      bridge.parent.splice(bridge.start, bridge.end, null);
-      // still need to deselect despite the css class; we don't want to end
-      // up dragging a selection instead of starting a new selection each time
-      document.getSelection().removeAllRanges();
-    }
+    // if no start node was ever selected, there is no active selection, so we don't need to do anything
+    if (this.selection_start_node) {
+      // we only split the tree if an end node was selected
+      if (selection_end_node) {
+        var bridge = TreeNode.findBridge(this.selection_start_node, selection_end_node);
+        bridge.parent.splice(bridge.start, bridge.end, null);
+      }
 
-    this.selection_start_node = null;
-    this.tree.applyAll(node => { node['selected'] = false; });
-    this.sync();
+      // still need to deselect despite the css ::selection style; we don't want
+      // to end up dragging a selection instead of starting a new one each time
+      document.getSelection().removeAllRanges();
+
+      // if the mouse let up elsewhere, and we had been selecting a bridge, we
+      // still need to deselect the whole tree.
+      this.selection_start_node = null;
+      this.tree.applyAll(node => { node['selected'] = false; });
+      this.sync();
+    }
   }
 
   mouseup(event) {
+    // document.mouseup gets called before the react component's mouseup event
+    // reaches the controller, but we want that method (selectEndNode) to be
+    // processed first.
     setTimeout(() => { this.selectEndNode(null) }, 50);
   }
 

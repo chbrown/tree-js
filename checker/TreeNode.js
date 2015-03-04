@@ -104,7 +104,7 @@ var TreeNode = (function () {
     TreeNode.prototype.toJSON = function () {
         return {
             value: this.value,
-            children: this.children,
+            children: this.children.map(function (child) { return child.toJSON(); })
         };
     };
     TreeNode.fromJSON = function (root) {
@@ -190,6 +190,7 @@ var Grammar = (function () {
         return errors;
     };
     Grammar.parseBNF = function (input) {
+        if (input === void 0) { input = ''; }
         var lines = input.trim().split(/\n/);
         var rules = lines.filter(function (line) { return line.indexOf('::=') > -1; }).map(function (line) {
             var parts = line.split('::=');
@@ -230,21 +231,30 @@ var TreeController = (function () {
         }
     };
     TreeController.prototype.selectEndNode = function (selection_end_node) {
-        if (this.selection_start_node && selection_end_node) {
-            var bridge = TreeNode.findBridge(this.selection_start_node, selection_end_node);
-            bridge.parent.splice(bridge.start, bridge.end, null);
-            // still need to deselect despite the css class; we don't want to end
-            // up dragging a selection instead of starting a new selection each time
+        // if no start node was ever selected, there is no active selection, so we don't need to do anything
+        if (this.selection_start_node) {
+            // we only split the tree if an end node was selected
+            if (selection_end_node) {
+                var bridge = TreeNode.findBridge(this.selection_start_node, selection_end_node);
+                bridge.parent.splice(bridge.start, bridge.end, null);
+            }
+            // still need to deselect despite the css ::selection style; we don't want
+            // to end up dragging a selection instead of starting a new one each time
             document.getSelection().removeAllRanges();
+            // if the mouse let up elsewhere, and we had been selecting a bridge, we
+            // still need to deselect the whole tree.
+            this.selection_start_node = null;
+            this.tree.applyAll(function (node) {
+                node['selected'] = false;
+            });
+            this.sync();
         }
-        this.selection_start_node = null;
-        this.tree.applyAll(function (node) {
-            node['selected'] = false;
-        });
-        this.sync();
     };
     TreeController.prototype.mouseup = function (event) {
         var _this = this;
+        // document.mouseup gets called before the react component's mouseup event
+        // reaches the controller, but we want that method (selectEndNode) to be
+        // processed first.
         setTimeout(function () {
             _this.selectEndNode(null);
         }, 50);
