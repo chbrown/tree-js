@@ -1,4 +1,4 @@
-all: examples/syntax-1.json site.css
+all: examples/syntax-1.json site.css checker/components.js checker/TreeNode.js
 
 examples/%.json: examples/%.yaml
 	yaml2json <$< >$@
@@ -7,4 +7,7 @@ examples/%.json: examples/%.yaml
 	lessc $< | cleancss --keep-line-breaks --skip-advanced -o $@
 
 %.js: %.jsx
-  jsx <$< >$@
+	jsx <$< >$@
+
+%.js: %.ts
+	tsc -m commonjs -t ES5 $+

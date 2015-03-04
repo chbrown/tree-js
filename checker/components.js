@@ -6,21 +6,21 @@ var nodeShape = {
   selected: React.PropTypes.bool,
 };
 
-var TerminalNode = React.createClass({
+var TerminalNode = React.createClass({displayName: "TerminalNode",
   propTypes: {
     node: React.PropTypes.shape(nodeShape),
     ctrl: React.PropTypes.object,
   },
   render: function() {
     return (
-      <div className={"terminal node " + (this.props.node.selected ? "selected" : "")}>
-        <div className="value-container"
-          onMouseDown={this.mouseDown}
-          onMouseEnter={this.mouseEnter}
-          onMouseUp={this.mouseUp}>
-          <span className="value">{this.props.node.value}</span>
-        </div>
-      </div>
+      React.createElement("div", {className: "terminal node " + (this.props.node.selected ? "selected" : "")}, 
+        React.createElement("div", {className: "value-container", 
+          onMouseDown: this.mouseDown, 
+          onMouseEnter: this.mouseEnter, 
+          onMouseUp: this.mouseUp}, 
+          React.createElement("span", {className: "value"}, this.props.node.value)
+        )
+      )
     );
   },
   mouseDown: function() {
@@ -34,7 +34,7 @@ var TerminalNode = React.createClass({
   },
 });
 
-var ParentNode = React.createClass({
+var ParentNode = React.createClass({displayName: "ParentNode",
   propTypes: {
     node: React.PropTypes.shape(nodeShape),
     ctrl: React.PropTypes.object,
@@ -47,32 +47,32 @@ var ParentNode = React.createClass({
   render: function() {
     var ctrl = this.props.ctrl;
     var cells = this.props.node.children.map(function(child) {
-      return <TreeSplitter node={child} ctrl={ctrl} />;
+      return React.createElement(TreeSplitter, {node: child, ctrl: ctrl});
     });
 
     var value_element;
     if (this.state.editing || this.props.node.value === null || this.props.node.value === '') {
       value_element = (
-        <form className="value-container" onSubmit={this.setValue} onDoubleClick={this.doubleClick}>
-          <input className="value" autoFocus onBlur={this.setValue} ref="value" defaultValue={this.props.node.value} />
-        </form>
+        React.createElement("form", {className: "value-container", onSubmit: this.setValue, onDoubleClick: this.doubleClick}, 
+          React.createElement("input", {className: "value", autoFocus: true, onBlur: this.setValue, ref: "value", defaultValue: this.props.node.value})
+        )
       );
     }
     else {
       value_element = (
-        <div className="value-container" onClick={this.setEditing}>
-          <span className="value">{this.props.node.value}</span>
-        </div>
+        React.createElement("div", {className: "value-container", onClick: this.setEditing}, 
+          React.createElement("span", {className: "value"}, this.props.node.value)
+        )
       );
     }
 
     return (
-      <div className={"node " + (this.props.node.selected ? "selected" : "")}>
-        {value_element}
-        <div className="children">
-          {cells}
-        </div>
-      </div>
+      React.createElement("div", {className: "node " + (this.props.node.selected ? "selected" : "")}, 
+        value_element, 
+        React.createElement("div", {className: "children"}, 
+          cells
+        )
+      )
     );
   },
   setEditing: function(ev) {
@@ -95,20 +95,20 @@ var ParentNode = React.createClass({
 Inside a React.createClass component, the createClass acts like a class declaration,
 and the custom fields you give it become properties on the instances of that class.
 */
-var TreeSplitter = React.createClass({
+var TreeSplitter = React.createClass({displayName: "TreeSplitter",
   propTypes: {
     node: React.PropTypes.shape(nodeShape),
     ctrl: React.PropTypes.object,
   },
   render: function() {
     if (this.props.node === undefined) {
-      return <i>empty</i>;
+      return React.createElement("i", null, "empty");
     }
     else if (this.props.node.children.length > 0) {
-      return <ParentNode {...this.props} />;
+      return React.createElement(ParentNode, React.__spread({},  this.props));
     }
     else {
-      return <TerminalNode {...this.props} />;
+      return React.createElement(TerminalNode, React.__spread({},  this.props));
     }
   },
 });

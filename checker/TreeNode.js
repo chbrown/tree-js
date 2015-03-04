@@ -182,9 +182,6 @@ var Grammar = (function () {
             if (production === undefined) {
                 errors.push("No such production rule exists: " + node_symbol + " -> " + node_production.join(' '));
             }
-            else {
-                console.log("Using rule: " + rule.symbol + " -> " + node_production.join(' '));
-            }
         }
         var childrens_errors = node.children.map(function (child) { return _this.findErrors(child); });
         // flatten

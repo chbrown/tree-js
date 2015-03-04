@@ -102,13 +102,6 @@ class TreeNode<T> {
     return new TreeNode<T>(this.value, children);
   }
 
-  toString(): any {
-    return {
-      value: this.value,
-      children: this.children,
-    };
-  }
-
   /** Need custom JSON-ifier to avoid circularity (.parent) problems */
   toJSON(): any {
     return {
@@ -200,9 +193,9 @@ class Grammar {
       if (production === undefined) {
         errors.push(`No such production rule exists: ${node_symbol} -> ${node_production.join(' ')}`);
       }
-      else {
-        console.log(`Using rule: ${rule.symbol} -> ${node_production.join(' ')}`);
-      }
+      // else {
+      //   console.log(`Using rule: ${rule.symbol} -> ${node_production.join(' ')}`);
+      // }
     }
 
     var childrens_errors = node.children.map(child => this.findErrors(child));

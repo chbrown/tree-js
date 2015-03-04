@@ -3,17 +3,19 @@
   <meta charset="utf-8">
   <title>tree-js splitter</title>
   <link href="../site.css" rel="stylesheet" type="text/css">
-  <script src="../lib/lodash.min.js"></script>
-  <script src="../lib/angular.js"></script>
+  <script src="../lib/angular.min.js"></script>
+  <script src="../lib/ngStorage.min.js"></script>
   <script src="../lib/textarea.js"></script>
-  <script src="../lib/ngStorage.js"></script>
-  <script src="../lib/react.js"></script>
-  <script src="../lib/JSXTransformer.js"></script>
+  <script src="../lib/react.min.js"></script>
   <script src="TreeNode.js"></script>
   <script src="app.js"></script>
-  <script src="components.jsx" type="text/jsx"></script>
+  <!-- debug: -->
+  <!-- <script src="../lib/JSXTransformer.js"></script> -->
+  <!-- <script src="components.jsx" type="text/jsx"></script> -->
+  <!-- production: -->
+  <script src="components.js"></script>
 </head>
-<body>
+<body ng-app="app">
   <nav ng-controller="assignmentCtrl" style="position: absolute; width: 300px; padding: 10px;">
     <label>
       <h4>Grammar</h4>
