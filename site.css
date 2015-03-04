@@ -1,4 +1,4 @@
-body{margin:0}
+e body{margin:0}
 table{border-spacing:0;border-collapse:collapse}
 table td,table th{font-size:100%;text-align:left}
 body{font:16px Times}
@@ -7,9 +7,12 @@ label h4{margin:1ex 0 .25ex 0}
 div,input,main,nav,section,span,textarea{box-sizing:border-box}
 input,pre,textarea{font:10px Monaco,"Courier New",san-serif;padding:2px;resize:none}
 .no-selection ::selection{background:0 0}
-.tree td{vertical-align:top}
 .tree .selected{background-color:#CCC}
 .tree form ::selection{background:#ACCEF7}
-.tree .terminal-node{display:inline-block;padding:.5ex .5em}
-.tree .parent-node{text-align:center;border-bottom:1px solid #555}
-.tree .parent-node-value{display:inline-block;font:16px Times;text-align:center;border:none;width:40px;padding:4px 2px 2px;font-weight:700}
+.tree .node{display:inline-block;vertical-align:top;text-align:center;margin:0 5px}
+.tree .node.terminal .value-container{border-bottom:none}
+.tree .node.terminal .value-container .value{font-weight:400}
+.tree .node .value-container{border-bottom:1px solid #555}
+.tree .node .value-container .value{display:inline-block;font:700 16px Times;padding:2px;min-width:35px}
+.tree .node .value-container .value:empty:before{content:'\00a0'}
+.tree .node .value-container input.value{border:none;width:35px;text-align:center}

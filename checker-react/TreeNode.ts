@@ -7,6 +7,15 @@ function indexOfFirstInequality<T>(xs: Array<T>, ys: Array<T>): number {
   return length;
 }
 
+function arraysEqual(xs: string[], ys: string[]): boolean {
+  for (var i = 0, l = Math.max(xs.length, ys.length); i < l; i++) {
+    if (xs[i] !== ys[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 class TreeNode<T> {
   __children: TreeNode<T>[];
   parent: TreeNode<T>;
@@ -22,9 +31,7 @@ class TreeNode<T> {
 
   set children(children: TreeNode<T>[]) {
     // extend children with parent links
-    children.forEach(child => {
-      child.parent = this;
-    });
+    children.forEach(child => { child.parent = this });
     this.__children = children;
   }
 
@@ -90,6 +97,18 @@ class TreeNode<T> {
     return parents;
   }
 
+  clone(): TreeNode<T> {
+    var children = this.children.map(child => child.clone());
+    return new TreeNode<T>(this.value, children);
+  }
+
+  toString(): any {
+    return {
+      value: this.value,
+      children: this.children,
+    };
+  }
+
   /** Need custom JSON-ifier to avoid circularity (.parent) problems */
   toJSON(): any {
     return {
@@ -98,38 +117,17 @@ class TreeNode<T> {
     };
   }
   static fromJSON<T>(root: any): TreeNode<T> {
-    var node = new TreeNode(root.value);
-    node.children = root.children.map(child => {
-      return TreeNode.fromJSON(child);
-    });
-    return node;
+    var children = root.children.map(child => TreeNode.fromJSON(child));
+    return new TreeNode(root.value, children);
   }
 
-  toTuple() {
-    if (this.children.length > 0) {
-      return [
-        this.value,
-        this.children.map(child => child.toTuple()),
-      ];
-    }
-    else {
-      return [this.value];
-    }
-  }
-  serialize(): string {
-    return JSON.stringify(this.toTuple());
+  toTuple(): any {
+    var children = this.children.map(child => child.toTuple());
+    return (children.length > 0) ? [this.value, children] : [this.value];
   }
   static fromTuple<T>(tuple: any): TreeNode<T> {
-    var node = new TreeNode(tuple[0]);
-    if (tuple[1] !== undefined) {
-      node.children = tuple[1].map(child => {
-        return TreeNode.fromTuple(child);
-      });
-    }
-    return node;
-  }
-  static deserialize<T>(serialized: string): TreeNode<T> {
-    return TreeNode.fromTuple<T>(JSON.parse(serialized));
+    var children = (tuple[1] || []).map(child => TreeNode.fromTuple<T>(child))
+    return new TreeNode(tuple[0], children);
   }
 
   static findFirstCommonAncestor<T>(a: TreeNode<T>, b: TreeNode<T>): TreeNode<T> {
@@ -177,15 +175,6 @@ interface Rule {
   productions: string[][];
 }
 
-function arraysEqual(xs: string[], ys: string[]): boolean {
-  for (var i = 0, l = Math.max(xs.length, ys.length); i < l; i++) {
-    if (xs[i] !== ys[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
 class Grammar {
   constructor(public rules: Rule[]) { }
 
@@ -201,17 +190,13 @@ class Grammar {
     var errors = [];
 
     var node_symbol = node.value;
-    var rule = this.rules.filter(rule => {
-      return rule.symbol == node_symbol;
-    })[0];
+    var rule = this.rules.filter(rule => rule.symbol == node_symbol)[0];
     if (rule === undefined) {
       errors.push(`No rule exists for the value: ${node_symbol}`);
     }
     else {
       var node_production = node.children.map(child => child.value);
-      var production = rule.productions.filter(production => {
-        return arraysEqual(production, node_production);
-      })[0];
+      var production = rule.productions.filter(production => arraysEqual(production, node_production))[0];
       if (production === undefined) {
         errors.push(`No such production rule exists: ${node_symbol} -> ${node_production.join(' ')}`);
       }
@@ -220,9 +205,7 @@ class Grammar {
       }
     }
 
-    var childrens_errors = node.children.map(child => {
-      return this.findErrors(child);
-    });
+    var childrens_errors = node.children.map(child => this.findErrors(child));
     // flatten
     var child_errors = Array.prototype.concat.apply([], childrens_errors);
 
@@ -232,9 +215,9 @@ class Grammar {
 
   static parseBNF(input: string): Grammar {
     var lines = input.trim().split(/\n/);
-    var rules = lines.filter(line => {
-      return line.indexOf('::=') > -1;
-    }).map(line => {
+    var rules = lines
+    .filter(line => line.indexOf('::=') > -1)
+    .map(line => {
       var parts = line.split('::=');
       return {
         symbol: parts[0].trim(),
@@ -244,5 +227,66 @@ class Grammar {
       }
     })
     return new Grammar(rules);
+  }
+}
+
+class TreeController<T> {
+  selection_start_node: TreeNode<T>;
+
+  constructor(public tree: TreeNode<T>) {
+    document.addEventListener('mouseup', (event) => {
+      this.mouseup(event);
+    });
+  }
+
+  selectStartNode(selection_start_node: TreeNode<T>) {
+    this.selection_start_node = selection_start_node;
+  }
+  hoverEndNode(selection_end_node: TreeNode<T>) {
+    if (this.selection_start_node) {
+      // findBridge => { parent: TreeNode<T>; start: number; end: number; }
+      var bridge = TreeNode.findBridge(this.selection_start_node, selection_end_node);
+      var bridge_nodes = bridge.parent.children.slice(bridge.start, bridge.end + 1);
+      this.tree.applyAll(node => { node['selected'] = false });
+      bridge_nodes.forEach(node => { node['selected'] = true });
+
+      this.sync();
+    }
+  }
+  selectEndNode(selection_end_node: TreeNode<T>) {
+    if (this.selection_start_node && selection_end_node) {
+      var bridge = TreeNode.findBridge(this.selection_start_node, selection_end_node);
+      bridge.parent.splice(bridge.start, bridge.end, null);
+      // still need to deselect despite the css class; we don't want to end
+      // up dragging a selection instead of starting a new selection each time
+      document.getSelection().removeAllRanges();
+    }
+
+    this.selection_start_node = null;
+    this.tree.applyAll(node => { node['selected'] = false; });
+    this.sync();
+  }
+
+  mouseup(event) {
+    setTimeout(() => { this.selectEndNode(null) }, 50);
+  }
+
+  collapseNode(node: TreeNode<T>): void {
+    node.collapse();
+    this.sync();
+  }
+
+  setNodeValue(node: TreeNode<T>, value: T): void {
+    node.value = value;
+    this.sync();
+  }
+
+  setTree(tree: TreeNode<T>): void {
+    this.tree = tree;
+    this.sync();
+  }
+
+  sync() {
+    console.log('TreeController#sync: no-op');
   }
 }

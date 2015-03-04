@@ -6,6 +6,14 @@ function indexOfFirstInequality(xs, ys) {
     }
     return length;
 }
+function arraysEqual(xs, ys) {
+    for (var i = 0, l = Math.max(xs.length, ys.length); i < l; i++) {
+        if (xs[i] !== ys[i]) {
+            return false;
+        }
+    }
+    return true;
+}
 var TreeNode = (function () {
     function TreeNode(value, children) {
         if (value === void 0) { value = null; }
@@ -88,6 +96,10 @@ var TreeNode = (function () {
         }
         return parents;
     };
+    TreeNode.prototype.clone = function () {
+        var children = this.children.map(function (child) { return child.clone(); });
+        return new TreeNode(this.value, children);
+    };
     /** Need custom JSON-ifier to avoid circularity (.parent) problems */
     TreeNode.prototype.toJSON = function () {
         return {
@@ -96,37 +108,16 @@ var TreeNode = (function () {
         };
     };
     TreeNode.fromJSON = function (root) {
-        var node = new TreeNode(root.value);
-        node.children = root.children.map(function (child) {
-            return TreeNode.fromJSON(child);
-        });
-        return node;
+        var children = root.children.map(function (child) { return TreeNode.fromJSON(child); });
+        return new TreeNode(root.value, children);
     };
     TreeNode.prototype.toTuple = function () {
-        if (this.children.length > 0) {
-            return [
-                this.value,
-                this.children.map(function (child) { return child.toTuple(); }),
-            ];
-        }
-        else {
-            return [this.value];
-        }
-    };
-    TreeNode.prototype.serialize = function () {
-        return JSON.stringify(this.toTuple());
+        var children = this.children.map(function (child) { return child.toTuple(); });
+        return (children.length > 0) ? [this.value, children] : [this.value];
     };
     TreeNode.fromTuple = function (tuple) {
-        var node = new TreeNode(tuple[0]);
-        if (tuple[1] !== undefined) {
-            node.children = tuple[1].map(function (child) {
-                return TreeNode.fromTuple(child);
-            });
-        }
-        return node;
-    };
-    TreeNode.deserialize = function (serialized) {
-        return TreeNode.fromTuple(JSON.parse(serialized));
+        var children = (tuple[1] || []).map(function (child) { return TreeNode.fromTuple(child); });
+        return new TreeNode(tuple[0], children);
     };
     TreeNode.findFirstCommonAncestor = function (a, b) {
         // get the two lines of ancestry
@@ -166,14 +157,6 @@ var TreeNode = (function () {
     };
     return TreeNode;
 })();
-function arraysEqual(xs, ys) {
-    for (var i = 0, l = Math.max(xs.length, ys.length); i < l; i++) {
-        if (xs[i] !== ys[i]) {
-            return false;
-        }
-    }
-    return true;
-}
 var Grammar = (function () {
     function Grammar(rules) {
         this.rules = rules;
@@ -189,17 +172,13 @@ var Grammar = (function () {
         }
         var errors = [];
         var node_symbol = node.value;
-        var rule = this.rules.filter(function (rule) {
-            return rule.symbol == node_symbol;
-        })[0];
+        var rule = this.rules.filter(function (rule) { return rule.symbol == node_symbol; })[0];
         if (rule === undefined) {
             errors.push("No rule exists for the value: " + node_symbol);
         }
         else {
             var node_production = node.children.map(function (child) { return child.value; });
-            var production = rule.productions.filter(function (production) {
-                return arraysEqual(production, node_production);
-            })[0];
+            var production = rule.productions.filter(function (production) { return arraysEqual(production, node_production); })[0];
             if (production === undefined) {
                 errors.push("No such production rule exists: " + node_symbol + " -> " + node_production.join(' '));
             }
@@ -207,9 +186,7 @@ var Grammar = (function () {
                 console.log("Using rule: " + rule.symbol + " -> " + node_production.join(' '));
             }
         }
-        var childrens_errors = node.children.map(function (child) {
-            return _this.findErrors(child);
-        });
+        var childrens_errors = node.children.map(function (child) { return _this.findErrors(child); });
         // flatten
         var child_errors = Array.prototype.concat.apply([], childrens_errors);
         Array.prototype.push.apply(errors, child_errors);
@@ -217,9 +194,7 @@ var Grammar = (function () {
     };
     Grammar.parseBNF = function (input) {
         var lines = input.trim().split(/\n/);
-        var rules = lines.filter(function (line) {
-            return line.indexOf('::=') > -1;
-        }).map(function (line) {
+        var rules = lines.filter(function (line) { return line.indexOf('::=') > -1; }).map(function (line) {
             var parts = line.split('::=');
             return {
                 symbol: parts[0].trim(),
@@ -231,4 +206,66 @@ var Grammar = (function () {
         return new Grammar(rules);
     };
     return Grammar;
+})();
+var TreeController = (function () {
+    function TreeController(tree) {
+        var _this = this;
+        this.tree = tree;
+        document.addEventListener('mouseup', function (event) {
+            _this.mouseup(event);
+        });
+    }
+    TreeController.prototype.selectStartNode = function (selection_start_node) {
+        this.selection_start_node = selection_start_node;
+    };
+    TreeController.prototype.hoverEndNode = function (selection_end_node) {
+        if (this.selection_start_node) {
+            // findBridge => { parent: TreeNode<T>; start: number; end: number; }
+            var bridge = TreeNode.findBridge(this.selection_start_node, selection_end_node);
+            var bridge_nodes = bridge.parent.children.slice(bridge.start, bridge.end + 1);
+            this.tree.applyAll(function (node) {
+                node['selected'] = false;
+            });
+            bridge_nodes.forEach(function (node) {
+                node['selected'] = true;
+            });
+            this.sync();
+        }
+    };
+    TreeController.prototype.selectEndNode = function (selection_end_node) {
+        if (this.selection_start_node && selection_end_node) {
+            var bridge = TreeNode.findBridge(this.selection_start_node, selection_end_node);
+            bridge.parent.splice(bridge.start, bridge.end, null);
+            // still need to deselect despite the css class; we don't want to end
+            // up dragging a selection instead of starting a new selection each time
+            document.getSelection().removeAllRanges();
+        }
+        this.selection_start_node = null;
+        this.tree.applyAll(function (node) {
+            node['selected'] = false;
+        });
+        this.sync();
+    };
+    TreeController.prototype.mouseup = function (event) {
+        var _this = this;
+        setTimeout(function () {
+            _this.selectEndNode(null);
+        }, 50);
+    };
+    TreeController.prototype.collapseNode = function (node) {
+        node.collapse();
+        this.sync();
+    };
+    TreeController.prototype.setNodeValue = function (node, value) {
+        node.value = value;
+        this.sync();
+    };
+    TreeController.prototype.setTree = function (tree) {
+        this.tree = tree;
+        this.sync();
+    };
+    TreeController.prototype.sync = function () {
+        console.log('TreeController#sync: no-op');
+    };
+    return TreeController;
 })();

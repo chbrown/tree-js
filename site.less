@@ -1,4 +1,4 @@
-// --- general resets ---
+e// --- general resets ---
 body {
   margin: 0;
 }
@@ -41,9 +41,6 @@ textarea, input, pre {
 }
 
 .tree {
-  td {
-    vertical-align: top;
-  }
   .selected {
     background-color: #CCC;
   }
@@ -54,21 +51,37 @@ textarea, input, pre {
     }
   }
 
-  .terminal-node {
+  .node {
     display: inline-block;
-    padding: .5ex .5em;
-  }
-  .parent-node {
+    vertical-align: top;
     text-align: center;
-    border-bottom: 1px solid #555;
+    margin: 0 5px;
+
+    &.terminal {
+      .value-container {
+        border-bottom: none;
+        .value {
+          font-weight: normal;
+        }
+      }
+    }
+    .value-container {
+      border-bottom: 1px solid #555;
+      .value {
+        display: inline-block;
+        font: bold 16px Times;
+        padding: 2px;
+        min-width: 35px;
+      }
+      .value:empty:before {
+        content: '\00a0';
+      }
+      input.value {
+        border: none;
+        width: 35px;
+        text-align: center;
+      }
+    }
   }
-  .parent-node-value {
-    display: inline-block;
-    font: 16px Times;
-    text-align: center;
-    border: none;
-    width: 40px;
-    padding: 4px 2px 2px;
-    font-weight: bold;
-  }
+
 }

@@ -1,4 +1,4 @@
-/*jslint browser: true */ /*globals _, angular, React, Textarea, TreeNode */
+/*jslint browser: true */ /*globals _, angular, React, Textarea, TreeNode, TreeSplitter, TreeController, Grammar */
 var app = angular.module('app', [
   'ngStorage',
 ]);
@@ -26,119 +26,51 @@ app.controller('checkerCtrl', function($scope, $localStorage) {
     start: 'S',
   });
 
+  var placeholder_element = document.getElementById('placeholder');
+
+  var treeCtrl = new TreeController();
+  // extend the TreeController with React-awareness
+  treeCtrl.render = function() {
+    var props = {ctrl: this, node: this.tree};
+    if (this.react_component === undefined) {
+      this.react_component = React.render(React.createElement(TreeSplitter, props), placeholder_element);
+    }
+    else {
+      this.react_component.setProps(props);
+    }
+  };
+  treeCtrl.sync = function() {
+    var tree = this.tree;
+    log('TreeController#sync: in-scope: %o', tree.toTuple());
+    this.render();
+    setTimeout(function() {
+      $scope.$apply(function() {
+        $localStorage.tree = tree.toTuple(); //.clone();
+        $scope.check(tree);
+      });
+    }, 10);
+  };
+
+  var initial_tree = new TreeNode(null);
   try {
-    $scope.tree = TreeNode.deserialize(localStorage.tree);
+    initial_tree = TreeNode.fromTuple($localStorage.tree);
   }
   catch (exc) {
-    console.error('could not deserialize tree from localStorage', exc);
+    console.error('could not recover tree from $localStorage; initializing with empty tree', exc);
   }
+  log('initial tree', initial_tree);
+  treeCtrl.setTree(initial_tree);
 
-  $scope.reload = function() {
-    var tokens = $scope.$storage.input.split(/\s+/);
-    var children = tokens.map(function(token) {
-      return new TreeNode(token);
+  $scope.setTreeFromStartAndTerminals = function(start, terminals) {
+    var children = terminals.map(function(terminal) {
+      return new TreeNode(terminal);
     });
-    var start = $scope.$storage.start;
-    $scope.tree = new TreeNode(start, children);
-    $scope.check();
+    var tree = new TreeNode(start, children);
+    treeCtrl.setTree(tree);
   };
 
-  $scope.sync = function(tree) {
-    localStorage.tree = tree.serialize();
-    $scope.check();
-  };
-
-  $scope.check = function() {
+  $scope.check = function(tree) {
     var grammar = Grammar.parseBNF($scope.$storage.grammar);
-    $scope.errors = grammar.findErrors($scope.tree);
-  };
-
-  $scope.check();
-});
-
-app.directive('reactSplitter', function() {
-  return {
-    restrict: 'E',
-    scope: {
-      tree: '=',
-      sync: '&',
-    },
-    link: function(scope, el, attrs) {
-      var startNode;
-
-      var handler = {};
-      handler.selectStartNode = function(node) {
-        startNode = node;
-      };
-      handler.hoverEndNode = function(node) {
-        if (startNode) {
-          // findBridge => { parent: TreeNode<T>; start: number; end: number; }
-          var bridge = TreeNode.findBridge(startNode, node);
-          var bridge_nodes = bridge.parent.children.slice(bridge.start, bridge.end + 1);
-          scope.tree.applyAll(function(node) {
-            node.selected = false;
-          });
-          bridge_nodes.forEach(function(node) {
-            node.selected = true;
-          });
-          render();
-        }
-      };
-      handler.selectEndNode = function(node) {
-        if (startNode) {
-          var bridge = TreeNode.findBridge(startNode, node);
-          scope.$apply(function() {
-            bridge.parent.splice(bridge.start, bridge.end, '');
-          });
-          sync();
-          // still need to deselect despite the css class; we don't want to end
-          // up dragging a selection instead of starting a new selection each time
-          document.getSelection().removeAllRanges();
-        }
-      };
-
-      handler.mouseup = function() {
-        if (startNode) {
-          setTimeout(function() {
-            startNode = null;
-            scope.tree.applyAll(function(node) {
-              node.selected = false;
-            });
-            render();
-          }, 50);
-        }
-      };
-
-      handler.collapseNode = function(node) {
-        scope.$apply(function() {
-          node.collapse();
-          render();
-          sync();
-        });
-      };
-
-      handler.setNodeValue = function(node, value) {
-        scope.$apply(function() {
-          node.value = value;
-          render();
-          sync();
-        });
-      };
-
-      document.addEventListener('mouseup', handler.mouseup);
-
-      function render() {
-        React.render(scope.root, el[0]);
-      }
-
-      function sync() {
-        scope.sync({tree: scope.tree});
-      }
-
-      scope.$watch('tree', function() {
-        scope.root = React.createElement(TreeSplitter, {node: scope.tree, tree: handler});
-        React.render(scope.root, el[0]);
-      });
-    }
+    $scope.errors = grammar.findErrors(tree);
   };
 });

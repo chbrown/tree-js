@@ -20,8 +20,8 @@
       <textarea ng-model="$storage.grammar" style="width: 100%; min-height: 400px;" enhance></textarea>
     </label>
     <label>
-      <h4>Input</h4>
-      <input type="text" ng-model="$storage.input" style="width: 100%">
+      <h4>Terminals</h4>
+      <input type="text" ng-model="$storage.terminals" ng-list=" " ng-trim="false" style="width: 100%">
     </label>
     <label>
       <h4>Start</h4>
@@ -29,17 +29,17 @@
     </label>
   </nav>
   <main ng-controller="checkerCtrl" style="margin-left: 300px; padding: 10px;">
-    <button ng-click="reload()">Reload</button>
+    <button ng-click="setTreeFromStartAndTerminals($storage.start, $storage.terminals)">Reload</button>
     <h3>Parse</h3>
     <ul>
       <li>Select the text over multiple nodes to break them off into a new branch.</li>
       <li>Double click a node to undo a branch.</li>
     </ul>
-    <div style="margin: 5ex 0" class="no-selection">
-      <react-splitter class="tree" tree="tree" sync="sync(tree)"></react-splitter>
+    <div style="margin: 5ex 0" class="tree no-selection">
+      <div id="placeholder"></div>
     </div>
 
-    <h4 ng-if="errors.length == 0">Successful parse!</h4>
+    <h4 ng-if="errors.length === 0">Successful parse!</h4>
     <div ng-if="errors.length > 0">
       <h4>Parsing errors:</h4>
       <ul>
