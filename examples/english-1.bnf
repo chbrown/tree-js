@@ -3,6 +3,6 @@ NP ::= D N | N
 N ::= dog | boy | girl | bag | stick
 D ::= the | a | an
 VP ::= V NP
-V ::= hit | hurt | loves
+V ::= hit | hurt | loves | bit
 AdvP ::= Adv
 Adv ::= badly | swiftly
