@@ -4,6 +4,8 @@ table td,table th{font-size:100%;text-align:left}
 body{font:16px Times}
 h1,h2,h3,h4,h5,h6{margin:1ex 0}
 label h4{margin:1ex 0 .25ex 0}
+label.checkbox{display:inline-block;margin:0 .5em 1ex 0}
+label.checkbox>input,label.checkbox>span{vertical-align:top}
 div,input,main,nav,section,span,textarea{box-sizing:border-box}
 input,pre,textarea{font:10px Monaco,"Courier New",san-serif;padding:2px;resize:none}
 .no-selection ::selection{background:0 0}

@@ -8,7 +8,8 @@
   <script src="../lib/textarea.js"></script>
   <script src="../lib/react.min.js"></script>
   <script src="../lib/pako.min.js"></script>
-  <script src="compression.js"></script>
+  <script src="../lib/base64.js"></script>
+  <script src="../lib/unicode.js"></script>
   <script src="TreeNode.js"></script>
   <script src="app.js"></script>
   <!-- debug: -->
@@ -57,8 +58,12 @@
       </ul>
     </div>
 
-    <div style="margin: 5ex 0">
-      <a href="{{state_url}}">Link to current state</a>
+    <h4 style="margin-top: 5ex">State URL</h4>
+    <div>
+      <label ng-repeat="state_variable in state_variables" class="checkbox">
+        <input type="checkbox" ng-model="state_variable.include"><span style="text-transform: capitalize">{{state_variable.name}}</span>
+      </label>
     </div>
+    <a href="{{state_url}}">Link to current state</a> (right click and </div>Copy Link Address</code>)
   </main>
 </body>

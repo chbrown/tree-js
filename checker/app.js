@@ -1,4 +1,4 @@
-/*jslint browser: true */ /*globals _, angular, React, Textarea, compress, decompress */
+/*jslint browser: true */ /*globals _, angular, React, Textarea, pako, base64, unicode */
 /*globals TreeNode, TreeSplitter, TreeController, Grammar */
 var app = angular.module('app', [
   'ngStorage',
@@ -39,52 +39,104 @@ app.controller('assignmentCtrl', function($scope, $localStorage) {
   $scope.$storage = $localStorage;
 });
 
+
+
 /**
-Decompress / parse a value based on an array of filter names.
+encoders are for going from the native object to a more compressed / obscure format
+decoders translate the more compressed / obscure format back into the native object
 */
-function applyFilters(value, filters) {
-  for (var i = 0, filter; (filter = filters[i]); i++) {
-    if (filter == 'flate') {
-      try {
-        value = decompress(value);
-      }
-      catch (exc) {
-        console.error('Could not decompress flate value "%s"', value);
-      }
-    }
-    else if (filter == 'json') {
-      try {
-        value = JSON.parse(value);
-      }
-      catch (exc) {
-        console.error('Could not parse JSON value "%s"', value);
-      }
-    }
-    else {
-      console.error('No application available for filter "%s"', filter);
-    }
-  }
-  return value;
-}
+var coders = {
+  flate: {
+    /**
+    flate.encode(input: string): string
+
+    Compress a normal Javascript UTF16 string and encode the result as a base64 string.
+    */
+    encode: function(string) {
+      if (string === undefined || string === '') return '';
+      // encode the native javascript string to bytes
+      var bytes = unicode.encodeString(string);
+      // compress those bytes to other bytes
+      var compressed_bytes = pako.deflate(bytes); // deflate means compress; compress means encode
+      // encode those bytes as a base64 string so that we can store it more easily
+      // TODO: avoid base64's odd characters: +, /, and =
+      return base64.encodeBytes(compressed_bytes);
+    },
+    /**
+    flate.decode(base64: string): string
+
+    Decode and decompress a base64-encoded string into the original string.
+    */
+    decode: function(base64_string) {
+      if (base64_string === undefined || base64_string === '') return '';
+      // decode the base64 string back into its original bytes
+      var compressed_bytes = base64.decodeString(base64_string);
+      // decompress the bytes
+      var bytes = pako.inflate(compressed_bytes); // inflate means decompress; decompress means decode
+      // convert those bytes back into a string
+      return unicode.decodeBytes(bytes);
+    },
+  },
+  json: {
+    encode: function(obj) {
+      return JSON.stringify(obj);
+    },
+    decode: function(string) {
+      return JSON.parse(string);
+    },
+  },
+  // compose json and flate such that json happens on the outside
+  jsonFlate: {
+    encode: function(obj) {
+      return coders.flate.encode(coders.json.encode(obj));
+    },
+    decode: function(string) {
+      return coders.json.decode(coders.flate.decode(string));
+    },
+  },
+  identity: {
+    encode: function(id) {
+      return id;
+    },
+    decode: function(id) {
+      return id;
+    },
+  },
+};
 
 app.controller('checkerCtrl', function($scope, $timeout, $location, $localStorage) {
   $scope.$storage = $localStorage;
 
-  var querystring = $location.search();
-  for (var key_specifier in querystring) {
-    // If a key has the suffix "~flate", it will be decompressed.
-    // If a key has the suffix "~json", it will be JSON.parse'd.
-    // If a key has the suffix "~flate-json", it will be decompressed and then JSON.parse'd.
-    var key_parts = key_specifier.split('~');
-    var key = key_parts[0];
-    var value = applyFilters(querystring[key_specifier], (key_parts[1] || '').split('-'));
+  $scope.state_variables = [{
+    name: 'grammar',
+    coder: coders.flate,
+    include: true,
+  }, {
+    name: 'start',
+    coder: coders.identity,
+    include: true,
+  }, {
+    name: 'terminals',
+    coder: coders.json,
+    include: true,
+  }, {
+    name: 'tree',
+    coder: coders.jsonFlate,
+    include: true,
+  }];
 
-    $scope.$storage[key] = value;
-    $location.search(key_specifier, null);
-  }
+  var querystring = $location.search();
+  $scope.state_variables.forEach(function(state_variable) {
+    var value = querystring[state_variable.name];
+    if (value) {
+      $scope.$storage[state_variable.name] = state_variable.coder.decode(value);
+      $location.search(state_variable.name, null);
+    }
+  });
 
   var placeholder_element = document.getElementById('placeholder');
 
+  var current_tree = null;
   var treeCtrl = new TreeController();
   // extend the TreeController with React-awareness
   treeCtrl.render = function() {
@@ -96,13 +148,15 @@ app.controller('checkerCtrl', function($scope, $timeout, $location, $localStorag
       this.react_component.setProps(props);
     }
   };
+  // and link it to Angular
   treeCtrl.sync = function() {
-    var tree = this.tree;
-    // log('TreeController#sync: in-scope', JSON.stringify(tree.toTuple()));
+    current_tree = this.tree;
     this.render();
     $timeout(function() {
       $scope.$apply(function() {
-        $scope.treeChanged(tree); //.clone();
+        $localStorage.tree = current_tree.toJSON();
+        $scope.check(current_tree);
+        updateStateUrl();
       });
     });
   };
@@ -134,15 +188,16 @@ app.controller('checkerCtrl', function($scope, $timeout, $location, $localStorag
     }
   };
 
-  $scope.treeChanged = function(tree) {
-    $localStorage.tree = tree.toJSON();
-    $scope.check(tree);
-    var params = {
-      'grammar~flate': compress($scope.$storage.grammar),
-      start: $scope.$storage.start,
-      'terminals~json': JSON.stringify($scope.$storage.terminals),
-      'tree~flate-json': compress(JSON.stringify(tree)),
-    };
+  function updateStateUrl() {
+    var params = {};
+    $scope.state_variables.forEach(function(state_variable) {
+      if (state_variable.include) {
+        var value = $scope.$storage[state_variable.name];
+        params[state_variable.name] = state_variable.coder.encode(value);
+      }
+    });
     $scope.state_url = serializeQuerystring(params);
-  };
+  }
+
+  $scope.$watch('state_variables', updateStateUrl, true);
 });
