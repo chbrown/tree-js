@@ -105,7 +105,9 @@ var coders = {
 };
 
 app.controller('checkerCtrl', function($scope, $timeout, $location, $localStorage) {
-  $scope.$storage = $localStorage;
+  $scope.$storage = $localStorage.$default({
+    show_instructions: true,
+  });
 
   $scope.state_variables = [{
     name: 'grammar',

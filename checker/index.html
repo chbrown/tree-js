@@ -35,8 +35,11 @@
   </nav>
   <main ng-controller="checkerCtrl" style="margin-left: 300px; padding: 10px;">
     <button ng-click="setTreeFromStartAndTerminals($storage.start, $storage.terminals)">Reload</button>
+    <label class="checkbox" style="float: right">
+      <input type="checkbox" ng-model="$storage.show_instructions"> <span>Show instructions</span>
+    </label>
     <h3>Parse</h3>
-    <ul>
+    <ul ng-show="$storage.show_instructions">
       <li>Drag a text selection over multiple nodes to break them off into a new branch.<br>
         The nodes that will be placed under the new branch will be shaded gray while selecting.<br>
         To discard the selection without creating a new node, simply drag to a point outside the tree.</li>
