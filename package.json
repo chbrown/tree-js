@@ -13,8 +13,14 @@
     "typescript": "*"
   },
   "staticDependencies": {
-    "angular": "*",
-    "lo-dash": "*",
+    "angular": {
+      "filter": ["angular.js", "angular.min.js"]
+    },
+    "lodash": "*",
+    "misc-js": {
+      "url": "git://github.com/chbrown/misc-js.git",
+      "filter": ["base64.js", "textarea.js", "unicode.js"]
+    },
     "ng-storage": "*",
     "react": "*"
   }
