@@ -15,126 +15,170 @@ function arraysEqual(xs, ys) {
     return true;
 }
 var TreeNode = (function () {
-    function TreeNode(value, children) {
+    function TreeNode(value, children, selected, start) {
         if (value === void 0) { value = null; }
         if (children === void 0) { children = []; }
+        if (selected === void 0) { selected = false; }
+        if (start === void 0) { start = false; }
         this.value = value;
         this.children = children;
+        this.selected = selected;
+        this.start = start;
+        Object.freeze(this);
     }
-    Object.defineProperty(TreeNode.prototype, "children", {
-        get: function () {
-            return this.__children;
-        },
-        set: function (children) {
-            var _this = this;
-            // extend children with parent links
-            children.forEach(function (child) {
-                child.parent = _this;
-            });
-            this.__children = children;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    /**
-    Apply a function to each node in the whole tree (at least, the whole tree
-    at or below this node), beginning at this node, depth-first.
-    */
-    TreeNode.prototype.applyAll = function (func) {
-        func(this);
-        this.children.forEach(function (child) {
-            child.applyAll(func);
-        });
-    };
-    /**
-    Split off a sequence of sibling nodes into their own subtree.
-  
-      -- A.splice(2, 3, 'G')
-          A             A
-      / / | \ \      / /  \ \
-      B C D E F      B G  E F
-                      / \
-                     C   D
-  
-    */
-    TreeNode.prototype.splice = function (start, end, value) {
-        var new_node = new TreeNode(value);
-        // this splice catches all the nodes between the anchor and focus nodes, inclusive.
-        new_node.children = this.children.splice(start, (end - start) + 1, new_node);
-        new_node.parent = this;
-    };
-    /**
-    Un-splice. Removes the called node, with the parent absorbing the children
-    in the same place / order.
-    */
-    TreeNode.prototype.collapse = function () {
-        if (!this.parent)
-            throw new Error('Cannot collapse the root node');
-        if (this.children.length === 0)
-            throw new Error('Cannot collapse a terminal node');
-        var parent = this.parent;
-        var index = parent.children.indexOf(this);
-        // fix the children's concept of parent
-        this.children.forEach(function (child) {
-            child.parent = parent;
-        });
-        var splice_args = this.children.slice(0);
-        splice_args.unshift(index, 1);
-        // remove the current node from the parent's children, and replace it with
-        // the current node's children.
-        Array.prototype.splice.apply(parent.children, splice_args);
-    };
-    /**
-    Return a list of parents of this node, from oldest to youngest,
-    ending with the calling node.
-    */
-    TreeNode.prototype.lineage = function () {
-        var node = this;
-        var parents = [node];
-        while ((node = node.parent)) {
-            parents.unshift(node);
-        }
-        return parents;
-    };
     TreeNode.prototype.clone = function () {
         var children = this.children.map(function (child) { return child.clone(); });
         return new TreeNode(this.value, children);
-    };
-    /** Need custom JSON-ifier to avoid circularity (.parent) problems */
-    TreeNode.prototype.toJSON = function () {
-        return {
-            value: this.value,
-            children: this.children.map(function (child) { return child.toJSON(); })
-        };
     };
     TreeNode.fromJSON = function (root) {
         var children = root.children.map(function (child) { return TreeNode.fromJSON(child); });
         return new TreeNode(root.value, children);
     };
-    TreeNode.prototype.toTuple = function () {
-        var children = this.children.map(function (child) { return child.toTuple(); });
-        return (children.length > 0) ? [this.value, children] : [this.value];
-    };
-    TreeNode.fromTuple = function (tuple) {
-        var children = (tuple[1] || []).map(function (child) { return TreeNode.fromTuple(child); });
-        return new TreeNode(tuple[0], children);
-    };
-    TreeNode.findFirstCommonAncestor = function (a, b) {
-        // get the two lines of ancestry
-        var a_lineage = a.lineage();
-        var b_lineage = b.lineage();
-        // if they come from the same tree, at least a_lineage[0] == b_lineage[0]
-        // (the root node), but let's not assume
-        // the lineage is not going to converge lower down if it doesn't match higher up.
-        var index_fca = indexOfFirstInequality(a_lineage, b_lineage) - 1;
-        if (index_fca === -1) {
-            throw new Error('Nodes in distinct trees have no common ancestor');
+    /**
+    Split off a sequence of sibling nodes into their own subtree.
+  
+         Tree.splice(A, 1, 2, 'G')
+  
+       Tree           Tree
+       / \            / \
+    ...   A        ...   A
+        / | \ \        /  \ \
+        C D E F        C  G F
+                         / \
+                        D   E
+  
+    This method does not mutate the calling node.
+    */
+    TreeNode.prototype.splice = function (parent, start, end, value) {
+        var children;
+        if (this === parent) {
+            var new_node_children = this.children.slice(start, end + 1);
+            var new_node = new TreeNode(value, new_node_children);
+            children = this.children.splice(0);
+            // splice catches all the nodes between the anchor and focus nodes, inclusive.
+            children.splice(start, (end - start) + 1, new_node);
         }
-        return a_lineage[index_fca];
+        else {
+            children = this.children.map(function (child) { return child.splice(parent, start, end, value); });
+        }
+        return new TreeNode(this.value, children, this.selected, this.start);
     };
-    TreeNode.findBridge = function (a, b) {
-        var a_lineage = a.lineage();
-        var b_lineage = b.lineage();
+    /**
+    Un-splice: Returns a copy of this node downward, where the specified `node`
+    has been collapsed out.
+  
+    Collapsing `node` replaces `node` (as far as its parent is concerned) with the
+    children of `node`, in the same place / order.
+  
+    This method does not mutate the calling node.
+    */
+    TreeNode.prototype.collapse = function (node) {
+        if (this === node)
+            throw new Error('Cannot collapse the root node');
+        var children;
+        var index = this.children.indexOf(node);
+        if (index > -1) {
+            // if the node is one of `this`'s children
+            // if (node.children.length === 0) throw new Error('Cannot collapse a terminal node');
+            children = this.children.slice(0);
+            // node.children are the orphans needing to be adopted
+            var splice_args = node.children;
+            splice_args.unshift(index, 1);
+            // remove the current node from the parent's children, and replace it with
+            // the current node's children.
+            Array.prototype.splice.apply(children, splice_args);
+        }
+        else {
+            // otherwise, the node is not any of this one's immediate children, keep looking
+            children = this.children.map(function (child) { return child.collapse(node); });
+        }
+        return new TreeNode(this.value, children, this.selected, this.start);
+    };
+    TreeNode.prototype.setNodeValue = function (node, value) {
+        // otherwise, the node that's getting a new value is elsewhere in the tree
+        var children = this.children.map(function (child) { return child.setNodeValue(node, value); });
+        var value = (this === node) ? value : this.value;
+        return new TreeNode(value, children, this.selected, this.start);
+    };
+    TreeNode.prototype.selectNodes = function (nodes) {
+        var children = this.children.map(function (child) { return child.selectNodes(nodes); });
+        var selected = nodes.indexOf(this) > -1;
+        return new TreeNode(this.value, children, selected, this.start);
+    };
+    TreeNode.prototype.setStartNode = function (node) {
+        var children = this.children.map(function (child) { return child.setStartNode(node); });
+        var start = this === node;
+        return new TreeNode(this.value, children, this.selected, start);
+    };
+    TreeNode.prototype.resetSelection = function () {
+        var children = this.children.map(function (child) { return child.resetSelection(); });
+        return new TreeNode(this.value, children, false, false);
+    };
+    TreeNode.prototype.contains = function (node) {
+        if (this === node) {
+            return true;
+        }
+        for (var i = 0, child; (child = this.children[i]); i++) {
+            if (child.contains(node)) {
+                return true;
+            }
+        }
+        return false;
+    };
+    TreeNode.prototype.containsStart = function () {
+        if (this.start) {
+            return true;
+        }
+        for (var i = 0, child; (child = this.children[i]); i++) {
+            if (child.containsStart()) {
+                return true;
+            }
+        }
+        return false;
+    };
+    /**
+    Search for the given node, and return the path from `this` node to it, if it
+    can be found. Return undefined if it cannot be found.
+    */
+    TreeNode.prototype.pathToNode = function (node) {
+        if (this === node) {
+            return [this];
+        }
+        for (var i = 0, child; (child = this.children[i]); i++) {
+            var result = child.pathToNode(node);
+            if (result !== undefined) {
+                result.unshift(this);
+                return result;
+            }
+        }
+    };
+    /**
+  
+    */
+    TreeNode.prototype.pathToStartNode = function () {
+        if (this.start) {
+            return [this];
+        }
+        for (var i = 0, child; (child = this.children[i]); i++) {
+            var result = child.pathToStartNode();
+            if (result !== undefined) {
+                result.unshift(this);
+                return result;
+            }
+        }
+    };
+    /**
+    Find the bridge between two nodes that might
+    */
+    TreeNode.prototype.bridgeFromStart = function (to) {
+        var a_lineage = this.pathToStartNode();
+        var b_lineage = this.pathToNode(to);
+        if (a_lineage === undefined || b_lineage === undefined) {
+            return;
+        }
+        if (a_lineage.length == 1 || b_lineage.length == 1) {
+            throw new Error('Cannot bridge to or from the root node');
+        }
         // a_lineage.length might not == b_lineage.length
         // a_lineage[0] should == b_lineage[0] (should == the root node)
         // index_fca :: index_of_first_common_ancestor
@@ -177,7 +221,7 @@ var Grammar = (function () {
             errors.push("No rule exists for the value: " + node_symbol);
         }
         else {
-            var node_production = node.children.map(function (child) { return child.value; });
+            var node_production = node.children.map(function (child) { return String(child.value); });
             var production = rule.productions.filter(function (production) { return arraysEqual(production, node_production); })[0];
             if (production === undefined) {
                 errors.push("No such production rule exists: " + node_symbol + " -> " + node_production.join(' '));
@@ -213,41 +257,41 @@ var TreeController = (function () {
             _this.mouseup(event);
         });
     }
-    TreeController.prototype.selectStartNode = function (selection_start_node) {
-        this.selection_start_node = selection_start_node;
+    TreeController.prototype.setStartNode = function (selection_start_node) {
+        var tree = this.tree.setStartNode(selection_start_node);
+        this.setTree(tree);
     };
     TreeController.prototype.hoverEndNode = function (selection_end_node) {
-        if (this.selection_start_node) {
-            // findBridge => { parent: TreeNode<T>; start: number; end: number; }
-            var bridge = TreeNode.findBridge(this.selection_start_node, selection_end_node);
-            var bridge_nodes = bridge.parent.children.slice(bridge.start, bridge.end + 1);
-            this.tree.applyAll(function (node) {
-                node['selected'] = false;
-            });
-            bridge_nodes.forEach(function (node) {
-                node['selected'] = true;
-            });
-            this.sync();
+        var active_selection = this.tree.containsStart();
+        if (active_selection) {
+            var bridge = this.tree.bridgeFromStart(selection_end_node);
+            if (bridge) {
+                // bridge: { parent: TreeNode<T>; start: number; end: number; }
+                var bridge_nodes = bridge.parent.children.slice(bridge.start, bridge.end + 1);
+                var tree = this.tree.selectNodes(bridge_nodes);
+                this.setTree(tree);
+            }
         }
     };
     TreeController.prototype.selectEndNode = function (selection_end_node) {
-        // if no start node was ever selected, there is no active selection, so we don't need to do anything
-        if (this.selection_start_node) {
-            // we only split the tree if an end node was selected
+        // selection_end_node will be null if the user mouse-up'ed outside the tree
+        var active_selection = this.tree.containsStart();
+        // if there is no active selection (no start node was ever selected), we don't need to do anything at all
+        if (active_selection) {
+            var tree = this.tree;
             if (selection_end_node) {
-                var bridge = TreeNode.findBridge(this.selection_start_node, selection_end_node);
-                bridge.parent.splice(bridge.start, bridge.end, null);
+                // bridge should not come out undefined, but maybe we should check?
+                var bridge = tree.bridgeFromStart(selection_end_node);
+                // we only split the tree if an end node has been selected
+                tree = tree.splice(bridge.parent, bridge.start, bridge.end, null);
+                // still need to deselect despite the css ::selection style; we don't want
+                // to end up dragging a selection instead of starting a new one each time
+                document.getSelection().removeAllRanges();
             }
-            // still need to deselect despite the css ::selection style; we don't want
-            // to end up dragging a selection instead of starting a new one each time
-            document.getSelection().removeAllRanges();
-            // if the mouse let up elsewhere, and we had been selecting a bridge, we
-            // still need to deselect the whole tree.
-            this.selection_start_node = null;
-            this.tree.applyAll(function (node) {
-                node['selected'] = false;
-            });
-            this.sync();
+            // if there was an active selection, we need to deselect the whole tree
+            // regardless whether the selection was completed or not
+            tree = tree.resetSelection();
+            this.setTree(tree);
         }
     };
     TreeController.prototype.mouseup = function (event) {
@@ -260,14 +304,13 @@ var TreeController = (function () {
         }, 50);
     };
     TreeController.prototype.collapseNode = function (node) {
-        node.collapse();
-        this.sync();
+        this.setTree(this.tree.collapse(node));
     };
     TreeController.prototype.setNodeValue = function (node, value) {
-        node.value = value;
-        this.sync();
+        this.setTree(this.tree.setNodeValue(node, value));
     };
     TreeController.prototype.setTree = function (tree) {
+        // this should be the only method that sets this.tree (besides the constructor)
         this.tree = tree;
         this.sync();
     };

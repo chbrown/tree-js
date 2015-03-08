@@ -156,7 +156,7 @@ app.controller('checkerCtrl', function($scope, $timeout, $location, $localStorag
     this.render();
     $timeout(function() {
       $scope.$apply(function() {
-        $localStorage.tree = current_tree.toJSON();
+        $localStorage.tree = current_tree;
         $scope.check(current_tree);
         updateStateUrl();
       });

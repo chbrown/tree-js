@@ -11,12 +11,15 @@ var TerminalNode = React.createClass({
     node: React.PropTypes.shape(nodeShape),
     ctrl: React.PropTypes.object,
   },
+  shouldComponentUpdate: function(nextProps, nextState) {
+    return (nextProps.node !== this.props.node) || (nextState !== this.state);
+  },
   render: function() {
     return (
       <div className={"terminal node " + (this.props.node.selected ? "selected" : "")}>
         <div className="value-container"
           onMouseDown={this.mouseDown}
-          onMouseEnter={this.mouseEnter}
+          onMouseOver={this.hover}
           onMouseUp={this.mouseUp}>
           <span className="value">{this.props.node.value}</span>
         </div>
@@ -24,9 +27,9 @@ var TerminalNode = React.createClass({
     );
   },
   mouseDown: function() {
-    this.props.ctrl.selectStartNode(this.props.node);
+    this.props.ctrl.setStartNode(this.props.node);
   },
-  mouseEnter: function() {
+  hover: function() {
     this.props.ctrl.hoverEndNode(this.props.node);
   },
   mouseUp: function() {
@@ -41,8 +44,12 @@ var ParentNode = React.createClass({
   },
   getInitialState: function() {
     return {
+      mouse_down: false,
       editing: false,
     };
+  },
+  shouldComponentUpdate: function(nextProps, nextState) {
+    return (nextProps.node !== this.props.node) || (nextState !== this.state);
   },
   render: function() {
     var ctrl = this.props.ctrl;
@@ -52,15 +59,25 @@ var ParentNode = React.createClass({
 
     var value_element;
     if (this.state.editing || this.props.node.value === null || this.props.node.value === '') {
+      // the form should not handle onMouseDown={this.mouseDown},
+      // which would make double clicking impossible (since the first click would splice in a new node)
       value_element = (
-        <form className="value-container" onSubmit={this.setValue} onDoubleClick={this.doubleClick}>
+        <form className="value-container"
+          onSubmit={this.setValue}
+          onDoubleClick={this.collapse}
+          onMouseOver={this.hover}
+          onMouseUp={this.mouseUp}>
           <input className="value" autoFocus onBlur={this.setValue} ref="value" defaultValue={this.props.node.value} />
         </form>
       );
     }
     else {
       value_element = (
-        <div className="value-container" onClick={this.setEditing}>
+        <div className="value-container"
+          onMouseDown={this.mouseDown}
+          onMouseOver={this.hover}
+          onMouseLeave={this.mouseLeave}
+          onMouseUp={this.mouseUp}>
           <span className="value">{this.props.node.value}</span>
         </div>
       );
@@ -75,9 +92,6 @@ var ParentNode = React.createClass({
       </div>
     );
   },
-  setEditing: function(ev) {
-    this.setState({editing: true});
-  },
   setValue: function(ev) {
     ev.preventDefault();
     var input_value = this.refs.value.getDOMNode().value;
@@ -86,7 +100,29 @@ var ParentNode = React.createClass({
       this.props.ctrl.setNodeValue(this.props.node, input_value);
     }
   },
-  doubleClick: function() {
+  mouseDown: function() {
+    // on mouseDown, we have to decide whether to start a selection or edit this node
+    // if we mouseDown and then mouseLeave, it's a selection.
+    // if we mouseDown and then mouseUp, we edit this node.
+    this.setState({mouse_down: true});
+  },
+  hover: function() {
+    this.props.ctrl.hoverEndNode(this.props.node);
+  },
+  mouseLeave: function() {
+    if (this.state.mouse_down) {
+      this.setState({mouse_down: false});
+      this.props.ctrl.setStartNode(this.props.node);
+    }
+  },
+  mouseUp: function() {
+    if (this.state.mouse_down) {
+      this.setState({mouse_down: false, editing: true});
+    }
+    this.props.ctrl.selectEndNode(this.props.node);
+  },
+  collapse: function() {
+    this.setState({editing: false});
     this.props.ctrl.collapseNode(this.props.node);
   },
 });
@@ -99,6 +135,9 @@ var TreeSplitter = React.createClass({
   propTypes: {
     node: React.PropTypes.shape(nodeShape),
     ctrl: React.PropTypes.object,
+  },
+  shouldComponentUpdate: function(nextProps, nextState) {
+    return (nextProps.node !== this.props.node) || (nextState !== this.state);
   },
   render: function() {
     if (this.props.node === undefined) {
