@@ -7,11 +7,11 @@
   "repository": "git://github.com/chbrown/tree-js.git",
   "author": "Christopher Brown <io@henrian.com> (http://henrian.com)",
   "license": "MIT",
-  "staticPattern": "lib/{file}",
   "devDependencies": {
     "react-tools": "*",
     "typescript": "*"
   },
+  "staticPattern": "lib/{file}",
   "staticDependencies": {
     "angular": {
       "filter": ["angular.js", "angular.min.js"]
